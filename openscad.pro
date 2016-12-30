@@ -42,7 +42,7 @@ isEmpty(QT_VERSION) {
 # If VERSION is not set, populate VERSION, VERSION_YEAR, VERSION_MONTH from system date
 include(version.pri)
 
-debug: DEFINES += DEBUG
+debug: DEFINES += RELEASE
 
 TEMPLATE = app
 

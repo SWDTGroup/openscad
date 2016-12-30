@@ -153,6 +153,19 @@ FontCache::FontCache()
 	}
 	FcStrListDone(dirs);
 
+	//add by zwbrush
+	if (OpenSCAD::debug!="")
+	{
+		FontInfoList *list = list_fonts();
+	
+		for (FontInfoList::iterator it = list->begin();it != list->end();it++) {
+			FontInfo font_info = (*it);
+			printf("font -- %s, %s\n", font_info.get_family().c_str(), font_info.get_file().c_str());
+		}
+	}
+	//end of add
+
+
 	const FT_Error error = FT_Init_FreeType(&this->library);
 	if (error) {
 		PRINT("WARNING: Can't initialize freetype library, text() objects will not be rendered");

@@ -89,6 +89,7 @@ std::string commandline_commands;
 std::string currentdir;
 static bool arg_info = false;
 static std::string arg_colorscheme;
+bool isVerify   = false; //add by zwbrush
 
 #define QUOTE(x__) # x__
 #define QUOTED(x__) QUOTE(x__)
@@ -141,6 +142,7 @@ static void help(const char *progname, bool failure = false)
          "%2%  --camera=eyex,y,z,centerx,y,z ] \\\n"
          "%2%[ --autocenter ] \\\n"
          "%2%[ --viewall ] \\\n"
+         "%2%[ --verify ] \\\n" /*add by zwbrush*/
          "%2%[ --imgsize=width,height ] [ --projection=(o)rtho|(p)ersp] \\\n"
          "%2%[ --render | --preview[=throwntogether] ] \\\n"
          "%2%[ --colorscheme=[Cornfield|Sunset|Metallic|Starnight|BeforeDawn|Nature|DeepOcean] ] \\\n"
@@ -347,6 +349,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 	const char *term_output_file = NULL;
 	const char *echo_output_file = NULL;
 
+	if(!isVerify) {//add by zwbrush
 	std::string suffix = boosty::extension_str( output_file );
 	boost::algorithm::to_lower( suffix );
 
@@ -364,7 +367,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 		PRINTB("Unknown suffix for output file %s\n", output_file);
 		return 1;
 	}
-
+	} //add by zwbrush
 	set_render_color_scheme(arg_colorscheme, true);
 	
 	// Top context - this context only holds builtins
@@ -399,6 +402,12 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 		PRINTB("Can't parse file '%s'!\n", filename.c_str());
 		return 1;
 	}
+
+	//add by zwbrush
+	if(isVerify) 
+		return 0;
+	//end of add
+
 	root_module->handleDependencies();
 
 	fs::path fpath = boosty::absolute(fs::path(filename));
@@ -805,6 +814,7 @@ int main(int argc, char **argv)
 		("x,x", po::value<string>(), "dxf-file")
 		("d,d", po::value<string>(), "deps-file")
 		("m,m", po::value<string>(), "makefile")
+		("verify", "verify scad file") /* line add by zwbrush*/
 		("D,D", po::value<vector<string> >(), "var=val")
 #ifdef ENABLE_EXPERIMENTAL
 		("enable", po::value<vector<string> >(), "enable experimental features")
@@ -838,6 +848,9 @@ int main(int argc, char **argv)
 	if (vm.count("help")) help(argv[0]);
 	if (vm.count("version")) version();
 	if (vm.count("info")) arg_info = true;
+
+	if (vm.count("verify")) isVerify = true;//add by zwbrush
+	
 
 	Render::type renderer = Render::OPENCSG;
 	if (vm.count("preview")) {
@@ -908,7 +921,8 @@ int main(int argc, char **argv)
 	NodeDumper dumper(nodecache);
 
 	bool cmdlinemode = false;
-	if (output_file) { // cmd-line mode
+//	if (output_file ) { // cmd-line mode
+	if (output_file || isVerify) { // cmd-line mode , add isVerify by zwbrush
 		cmdlinemode = true;
 		if (!inputFiles.size()) help(argv[0], true);
 	}

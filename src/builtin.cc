@@ -37,6 +37,7 @@ void Builtins::init(const char *name, class AbstractFunction *function)
 extern void register_builtin_functions();
 extern void register_builtin_csgops();
 extern void register_builtin_transform();
+extern void register_builtin_polarization();//add by Look
 extern void register_builtin_color();
 extern void register_builtin_primitives();
 extern void register_builtin_surface();
@@ -64,6 +65,7 @@ void Builtins::initialize()
 
 	register_builtin_csgops();
 	register_builtin_transform();
+	register_builtin_polarization();//add by Look
 	register_builtin_color();
 	register_builtin_primitives();
 	register_builtin_surface();

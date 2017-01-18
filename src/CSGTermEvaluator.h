@@ -20,6 +20,7 @@ public:
  	virtual Response visit(State &state, const class AbstractPolyNode &node);
  	virtual Response visit(State &state, const class CsgNode &node);
  	virtual Response visit(State &state, const class TransformNode &node);
+ 	virtual Response visit(State &state, const class PolarizationNode &node);  //add by Look
 	virtual Response visit(State &state, const class ColorNode &node);
  	virtual Response visit(State &state, const class RenderNode &node);
  	virtual Response visit(State &state, const class CgaladvNode &node);

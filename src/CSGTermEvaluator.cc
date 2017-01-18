@@ -5,6 +5,7 @@
 #include "module.h"
 #include "csgnode.h"
 #include "transformnode.h"
+#include "polarizationNode.h"//add by Look
 #include "colornode.h"
 #include "rendernode.h"
 #include "cgaladvnode.h"
@@ -184,6 +185,22 @@ Response CSGTermEvaluator::visit(State &state, const TransformNode &node)
 	}
 	return ContinueTraversal;
 }
+
+//add by Look begin
+//TODO:
+Response CSGTermEvaluator::visit(State &state, const PolarizationNode &node)
+{
+	if (state.isPrefix()) {
+		//TODO: add
+		//state.setMatrix(state.matrix() * node.matrix);
+	}
+	if (state.isPostfix()) {
+		applyToChildren(node, CSGT_UNION);
+		addToParent(state, node);
+	}
+	return ContinueTraversal;
+}
+//add by Look end
 
 Response CSGTermEvaluator::visit(State &state, const ColorNode &node)
 {

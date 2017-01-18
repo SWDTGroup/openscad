@@ -44,6 +44,7 @@ public:
 	void render_edges(Renderer::csgmode_e csgmode) const;
 
 	void transform(const Transform3d &mat);
+	void polarization(const double o_size[2], const double k_xy[2]);//add by Look
 	void resize(Vector3d newsize, const Eigen::Matrix<bool,3,1> &autosize);
 
 	bool is_convex() const;

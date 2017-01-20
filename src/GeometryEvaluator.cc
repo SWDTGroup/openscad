@@ -619,7 +619,7 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 				//
 			}
 			else {
-				printf("polarization - visit \n");
+				//printf("polarization - visit \n");
 				// First union all children
 				ResultObject res = applyToChildren(node, OPENSCAD_UNION);
 				if ((geom = res.constptr())) {
@@ -642,8 +642,6 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							//注意：强制把极化周长设置为node模型的周长
 							BoundingBox bbox = newps->getBoundingBox();
 							((PolarizationNode*)&node)->o_size[0] = bbox.max()[0] - bbox.min()[0];
-							newps->polarization(node.o_size, node.k_xy);
-
 							newps->polarization(node.o_size, node.k_xy);
  							geom = newps;
  						}

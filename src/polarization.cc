@@ -79,8 +79,8 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 		arr->toVector()[1]->getDouble(node->o_size[1]);
 		arr->toVector()[2]->getDouble(node->k_xy[0]);
 		arr->toVector()[3]->getDouble(node->k_xy[1]);
-		//TODO: delete output
-		printf("compiled polarization(%f, %f, %f, %f)\n", node->o_size[0], node->o_size[1], node->k_xy[0], node->k_xy[1]);
+		// delete output
+		//printf("compiled polarization(%f, %f, %f, %f)\n", node->o_size[0], node->o_size[1], node->k_xy[0], node->k_xy[1]);
 	}
 
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);

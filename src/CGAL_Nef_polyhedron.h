@@ -31,6 +31,7 @@ public:
 //	class PolySet *convertToPolyset() const;
 	void transform( const Transform3d &matrix );
 	void resize(const Vector3d &newsize, const Eigen::Matrix<bool,3,1> &autosize);
+	void polarization(double o_size[2], double k_xy[2]);//add by Look
 
 	shared_ptr<CGAL_Nef_polyhedron3> p3;
 };

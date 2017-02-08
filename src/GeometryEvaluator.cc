@@ -8,6 +8,7 @@
 #include "state.h"
 #include "offsetnode.h"
 #include "transformnode.h"
+#include "polarizationNode.h"//add by Look
 #include "linearextrudenode.h"
 #include "rotateextrudenode.h"
 #include "csgnode.h"
@@ -614,6 +615,88 @@ Response GeometryEvaluator::visit(State &state, const TransformNode &node)
 	}
 	return ContinueTraversal;
 }
+
+//add by Look begin
+Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
+{
+	if (state.isPrefix() && isSmartCached(node)) return PruneTraversal;
+	if (state.isPostfix()) {
+		shared_ptr<const class Geometry> geom;
+		if (!isSmartCached(node)) {
+			if (!"YanZheng") {
+				//
+			}
+			else {
+				//printf("polarization - visit \n");
+				// First union all children
+				ResultObject res = applyToChildren(node, OPENSCAD_UNION);
+				if ((geom = res.constptr())) {
+					if (geom->getDimension() == 2) {
+						PRINT("2d polygon could not use the funcation of polarization!\n");
+					}
+					else if (geom->getDimension() == 3) {
+ 						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
+ 						if (ps) {
+ 							// If we got a const object, make a copy
+ 							shared_ptr<PolySet> newps;
+ 							if (res.isConst()) newps.reset(new PolySet(*ps));
+ 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
+ 							//newps->transform(node.matrix);
+							//TEST: 获取包围盒数据
+							//BoundingBox bbox = newps->getBoundingBox();
+							//printf("node mesh BBox:[%f, %f, %f] [%f, %f, %f]\n  size:[%f, %f, %f] \n", bbox.min()[0], bbox.min()[1], bbox.min()[2], bbox.max()[0], bbox.max()[1], bbox.max()[2],
+							//	bbox.max()[0] - bbox.min()[0], bbox.max()[1] - bbox.min()[1], bbox.max()[2] - bbox.min()[2]);
+
+							//注意：强制把极化周长设置为node模型的周长
+							BoundingBox bbox = newps->getBoundingBox();
+							((PolarizationNode*)&node)->o_size[0] = bbox.max()[0] - bbox.min()[0];
+							newps->polarization(node.o_size, node.k_xy);
+ 							geom = newps;
+ 						}
+ 						else {
+ 							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
+ 							assert(N);
+ 							// If we got a const object, make a copy
+ 							shared_ptr<CGAL_Nef_polyhedron> newN;
+ 							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
+ 							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
+ 							//newN->transform(node.matrix);
+							printf("polarization - CGAL_Nef_polyhedron \n");
+ 							geom = newN;
+ 						}
+
+
+// 						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
+// 						if (ps) {
+// 							// If we got a const object, make a copy
+// 							shared_ptr<PolySet> newps;
+// 							if (res.isConst()) newps.reset(new PolySet(*ps));
+// 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
+// 							newps->transform(node.matrix);
+// 							geom = newps;
+// 						}
+// 						else {
+// 							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
+// 							assert(N);
+// 							// If we got a const object, make a copy
+// 							shared_ptr<CGAL_Nef_polyhedron> newN;
+// 							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
+// 							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
+// 							newN->transform(node.matrix);
+// 							geom = newN;
+// 						}
+					}
+				}
+			}
+		}
+		else {
+			geom = smartCacheGet(node, state.preferNef());
+		}
+		addToParent(state, node, geom);
+	}
+	return ContinueTraversal;
+}
+//add by Look end
 
 static void translate_PolySet(PolySet &ps, const Vector3d &translation)
 {

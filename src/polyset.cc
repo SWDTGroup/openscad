@@ -168,6 +168,21 @@ void PolySet::transform(const Transform3d &mat)
 	this->dirty = true;
 }
 
+//add by Look begin
+void PolySet::polarization(const double o_size[2], const double k_xy[2])
+{
+	BOOST_FOREACH(Polygon &p, this->polygons) {
+		BOOST_FOREACH(Vector3d &v, p) {
+			double r = v.z();
+			double theta = v.x() / o_size[0] * M_PI * 2;
+			v(0) = ( r * sin(theta) );
+			v(2) = ( r * cos(theta) );
+		}
+	}
+	this->dirty = true;
+}
+//add by Look end
+
 bool PolySet::is_convex() const {
 	if (convex || this->isEmpty()) return true;
 	if (!convex) return false;

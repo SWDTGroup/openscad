@@ -159,3 +159,12 @@ void CGAL_Nef_polyhedron::transform( const Transform3d &matrix )
 		}
 	}
 }
+
+//add by Look begin
+void CGAL_Nef_polyhedron::polarization(double o_size[2], double k_xy[2])
+{
+	if (!this->isEmpty()) {
+		//TODO: 
+	}
+}
+//add by Look end

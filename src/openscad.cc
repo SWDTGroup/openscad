@@ -91,6 +91,7 @@ std::string commandline_commands;
 std::string currentdir;
 static bool arg_info = false;
 static std::string arg_colorscheme;
+bool isVerify   = false; //add by zwbrush
 
 #define QUOTE(x__) # x__
 #define QUOTED(x__) QUOTE(x__)
@@ -143,6 +144,7 @@ static void help(const char *progname, bool failure = false)
          "%2%  --camera=eyex,y,z,centerx,y,z ] \\\n"
          "%2%[ --autocenter ] \\\n"
          "%2%[ --viewall ] \\\n"
+         "%2%[ --verify ] \\\n" /*add by zwbrush*/
          "%2%[ --imgsize=width,height ] [ --projection=(o)rtho|(p)ersp] \\\n"
          "%2%[ --render | --preview[=throwntogether] ] \\\n"
          "%2%[ --colorscheme=[Cornfield|Sunset|Metallic|Starnight|BeforeDawn|Nature|DeepOcean] ] \\\n"
@@ -349,26 +351,27 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 	const char *nefdbg_output_file = NULL;
 	const char *nef3_output_file = NULL;
 
-	std::string suffix = fs::path(output_file).extension().generic_string();
-	boost::algorithm::to_lower( suffix );
-
-	if (suffix == ".stl") stl_output_file = output_file;
-	else if (suffix == ".off") off_output_file = output_file;
-	else if (suffix == ".amf") amf_output_file = output_file;
-	else if (suffix == ".dxf") dxf_output_file = output_file;
-	else if (suffix == ".svg") svg_output_file = output_file;
-	else if (suffix == ".csg") csg_output_file = output_file;
-	else if (suffix == ".png") png_output_file = output_file;
-	else if (suffix == ".ast") ast_output_file = output_file;
-	else if (suffix == ".term") term_output_file = output_file;
-	else if (suffix == ".echo") echo_output_file = output_file;
-	else if (suffix == ".nefdbg") nefdbg_output_file = output_file;
-	else if (suffix == ".nef3") nef3_output_file = output_file;
-	else {
-		PRINTB("Unknown suffix for output file %s\n", output_file);
-		return 1;
-	}
-
+	if(!isVerify) {//add by zwbrush
+		std::string suffix = fs::path(output_file).extension().generic_string();
+		boost::algorithm::to_lower( suffix );
+	
+		if (suffix == ".stl") stl_output_file = output_file;
+		else if (suffix == ".off") off_output_file = output_file;
+		else if (suffix == ".amf") amf_output_file = output_file;
+		else if (suffix == ".dxf") dxf_output_file = output_file;
+		else if (suffix == ".svg") svg_output_file = output_file;
+		else if (suffix == ".csg") csg_output_file = output_file;
+		else if (suffix == ".png") png_output_file = output_file;
+		else if (suffix == ".ast") ast_output_file = output_file;
+		else if (suffix == ".term") term_output_file = output_file;
+		else if (suffix == ".echo") echo_output_file = output_file;
+		else if (suffix == ".nefdbg") nefdbg_output_file = output_file;
+		else if (suffix == ".nef3") nef3_output_file = output_file;
+		else {
+			PRINTB("Unknown suffix for output file %s\n", output_file);
+			return 1;
+		}
+	} //add by zwbrush
 	set_render_color_scheme(arg_colorscheme, true);
 	
 	// Top context - this context only holds builtins
@@ -413,6 +416,11 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 		}
 	}
     
+	//add by zwbrush
+	if(isVerify) 
+		return 0;
+	//end of add
+
 	root_module->handleDependencies();
 
 	fs::path fpath = fs::absolute(fs::path(filename));
@@ -827,7 +835,8 @@ int main(int argc, char **argv)
 		("x,x", po::value<string>(), "dxf-file")
 		("d,d", po::value<string>(), "deps-file")
 		("m,m", po::value<string>(), "makefile")
-		("D,D", po::value<vector<string>>(), "var=val")
+		("verify", "verify scad file") /* line add by zwbrush*/
+		("D,D", po::value<vector<string> >(), "var=val")
 #ifdef ENABLE_EXPERIMENTAL
 		("enable", po::value<vector<string>>(), "enable experimental features")
 #endif
@@ -863,6 +872,9 @@ int main(int argc, char **argv)
 	if (vm.count("help")) help(argv[0]);
 	if (vm.count("version")) version();
 	if (vm.count("info")) arg_info = true;
+
+	if (vm.count("verify")) isVerify = true;//add by zwbrush
+	
 
 	Render::type renderer = Render::OPENCSG;
 	if (vm.count("preview")) {
@@ -958,7 +970,8 @@ int main(int argc, char **argv)
 	NodeDumper dumper(nodecache);
 
 	bool cmdlinemode = false;
-	if (output_file) { // cmd-line mode
+//	if (output_file ) { // cmd-line mode
+	if (output_file || isVerify) { // cmd-line mode , add isVerify by zwbrush
 		cmdlinemode = true;
 		if (!inputFiles.size()) help(argv[0], true);
 	}

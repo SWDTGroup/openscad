@@ -1,4 +1,5 @@
 #include "CSGTreeEvaluator.h"
+#include "polarizationNode.h"//add by Look
 #include "state.h"
 #include "csgops.h"
 #include "module.h"
@@ -280,6 +281,25 @@ Response CSGTreeEvaluator::visit(State &state, const CgaladvNode &node)
 	}
 	return ContinueTraversal;
 }
+
+
+//add by Look begin
+//TODO:
+Response CSGTermEvaluator::visit(State &state, const PolarizationNode &node)
+{
+	if (state.isPrefix()) {
+		//TODO: add
+		//state.setMatrix(state.matrix() * node.matrix);
+	}
+	if (state.isPostfix()) {
+		applyToChildren(node, CSGT_UNION);
+		addToParent(state, node);
+	}
+	return ContinueTraversal;
+}
+//add by Look end
+
+
 
 /*!
 	Adds ourself to out parent's list of traversed children.

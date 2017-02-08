@@ -45,6 +45,7 @@ public:
 
 	void transform(const Transform3d &mat);
 	void resize(const Vector3d &newsize, const Eigen::Matrix<bool,3,1> &autosize);
+	void polarization(const double o_size[2], const double k_xy[2]);//add by Look
 
 	bool is_convex() const;
 	boost::tribool convexValue() const { return this->convex; }

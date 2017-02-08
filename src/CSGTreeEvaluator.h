@@ -24,6 +24,8 @@ public:
 	virtual Response visit(State &state, const class ColorNode &node);
  	virtual Response visit(State &state, const class RenderNode &node);
  	virtual Response visit(State &state, const class CgaladvNode &node);
+ 	virtual Response visit(State &state, const class PolarizationNode &node);  //add by Look
+
 
 	shared_ptr<class CSGNode> buildCSGTree(const AbstractNode &node);
 

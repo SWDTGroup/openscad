@@ -24,7 +24,7 @@ class NodeVisitor :
 	public Visitor<class SurfaceNode>,
 	public Visitor<class TransformNode>,
 	public Visitor<class ColorNode>,
-	public Visitor<class OffsetNode>
+	public Visitor<class OffsetNode>,
 	public Visitor<class PolarizationNode>
 {
 public:

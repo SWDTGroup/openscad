@@ -49,7 +49,7 @@ AbstractNode *TextModule::instantiate(const Context *ctx, const ModuleInstantiat
 	TextNode *node = new TextNode(inst);
 
 	AssignmentList args;
-	args += Assignment("text"), Assignment("size"), Assignment("font");
+	args += Assignment("text"), Assignment("size"), Assignment("font"), Assignment("fontFileName"); //modify by Look
 
 	Context c(ctx);
 	c.setVariables(args, evalctx);
@@ -75,6 +75,7 @@ AbstractNode *TextModule::instantiate(const Context *ctx, const ModuleInstantiat
 	node->params.set_text(lookup_string_variable_with_default(c, "text", ""));
 	node->params.set_spacing(lookup_double_variable_with_default(c, "spacing", 1.0));
 	node->params.set_font(lookup_string_variable_with_default(c, "font", ""));
+	node->params.set_fontFileName(lookup_string_variable_with_default(c, "fontFileName", ""));	//custom: the font file's name 
 	node->params.set_direction(lookup_string_variable_with_default(c, "direction", ""));
 	node->params.set_language(lookup_string_variable_with_default(c, "language", "en"));
 	node->params.set_script(lookup_string_variable_with_default(c, "script", ""));

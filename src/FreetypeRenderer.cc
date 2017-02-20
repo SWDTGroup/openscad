@@ -40,6 +40,121 @@
 
 #include FT_OUTLINE_H
 
+
+
+//add by Look Begin
+/////////////////////////Loading Font File///////////////////////////
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#include FT_TRUETYPE_TABLES_H
+
+class LKFace
+{
+public:
+	LKFace(const char *filePath, bool precomputeKerning = true);
+	~LKFace();
+
+	FT_Face *Face(){return ftFace;}
+
+private:
+	static FT_Library *getFTLibrary();
+
+	void BuildKerningCache();
+
+	FT_Face* ftFace;
+	int numGlyphs;
+	FT_Encoding* fontEncodingList;
+	FT_Error err;
+
+	bool hasKerningTable;
+	static const unsigned int MAX_PRECOMPUTED = 128;
+	float *kerningCache;
+};
+
+void LKFace::BuildKerningCache()
+{
+	FT_Vector kernAdvance;
+	kernAdvance.x = 0;
+	kernAdvance.y = 0;
+	kerningCache = new float[LKFace::MAX_PRECOMPUTED * LKFace::MAX_PRECOMPUTED * 2];
+	for(unsigned int j = 0; j < LKFace::MAX_PRECOMPUTED; j++)
+	{
+		for(unsigned int i = 0; i < LKFace::MAX_PRECOMPUTED; i++)
+		{
+			err = FT_Get_Kerning(*ftFace, i, j, ft_kerning_unfitted, &kernAdvance);
+			if(err)
+			{
+				delete[] kerningCache;
+				kerningCache = NULL;
+				return;
+			}
+
+			kerningCache[2 * (j * LKFace::MAX_PRECOMPUTED + i)] = static_cast<float>(kernAdvance.x) / 64.0f;
+			kerningCache[2 * (j * LKFace::MAX_PRECOMPUTED + i) + 1] = static_cast<float>(kernAdvance.y) / 64.0f;
+		}
+	}
+}
+
+FT_Library *LKFace::getFTLibrary()
+{
+	static FT_Library ftLib;
+	static bool hasInit = false;
+	if (!hasInit) {
+		FT_Init_FreeType(&ftLib);
+		hasInit = true;
+	}
+	return &ftLib;
+}
+
+LKFace::LKFace(const char* fontFilePath, bool precomputeKerning)
+	:   numGlyphs(0),
+	fontEncodingList(0),
+	kerningCache(0),
+	err(0)
+{
+	const FT_Long DEFAULT_FACE_INDEX = 0;
+	ftFace = new FT_Face;
+
+	err = FT_New_Face(*LKFace::getFTLibrary(), fontFilePath,
+		DEFAULT_FACE_INDEX, ftFace);
+	if(err)
+	{
+		delete ftFace;
+		ftFace = 0;
+		return;
+	}
+
+	numGlyphs = (*ftFace)->num_glyphs;
+	hasKerningTable = (FT_HAS_KERNING((*ftFace)) != 0);
+
+	if(hasKerningTable && precomputeKerning)
+	{
+		BuildKerningCache();
+	}
+}
+
+LKFace::~LKFace()
+{
+
+	if(kerningCache)
+	{
+		delete[] kerningCache;
+	}
+
+	if(ftFace)
+	{
+		FT_Done_Face(*ftFace);
+		delete ftFace;
+		ftFace = 0;
+	}
+}
+
+/////////////////////////Loading Font File///////////////////////////
+//add by Look End
+
+
+
 #define SCRIPT_UNTAG(tag)   ((uint8_t)((tag)>>24)) % ((uint8_t)((tag)>>16)) % ((uint8_t)((tag)>>8)) % ((uint8_t)(tag))
 
 static inline Vector2d get_scaled_vector(const FT_Vector *ft_vector, double scale) {
@@ -47,7 +162,7 @@ static inline Vector2d get_scaled_vector(const FT_Vector *ft_vector, double scal
 }
 
 const double FreetypeRenderer::scale = 1000;
-
+ 
 FreetypeRenderer::FreetypeRenderer()
 {
 	funcs.move_to = outline_move_to_func;
@@ -204,7 +319,31 @@ std::vector<const Geometry *> FreetypeRenderer::render(const FreetypeRenderer::P
 		return std::vector<const Geometry *>();
 	}
 
-	face = cache->get_font(params.font);
+	//modify by Look Begin
+	LKFace *lkFace = NULL;
+	std::string fontFileName = params.fontFileName;
+	PRINT(fontFileName + "---" + params.font);
+	if (fontFileName.length() > 0)
+	{
+		PRINT(fontFileName + " is using");
+		if (fontFileName.find_first_of('\\') != -1 || fontFileName.find_first_of('/') != -1) {
+			PRINT("The font fileName is error!");
+			return std::vector<const Geometry *>();
+		}
+		else {
+#define FONT_FILE_FOLDER "/root"	//setting
+			//char *fontFilePath = "/root/timesbd.ttf";
+			std::string fontFilePath = std::string(FONT_FILE_FOLDER) + "/" + fontFileName;
+			lkFace = new LKFace(fontFilePath.c_str());
+			face = *lkFace->Face();
+		}
+	}
+	else
+	{
+		face = cache->get_font(params.font);
+	}
+	//face = cache->get_font(params.font);
+	//modify by Look End
 	if (face == NULL) {
 		return std::vector<const Geometry *>();
 	}
@@ -311,6 +450,8 @@ std::vector<const Geometry *> FreetypeRenderer::render(const FreetypeRenderer::P
 
 	hb_buffer_destroy(hb_buf);
         hb_font_destroy(hb_ft_font);
-	
+
+	if (lkFace) { delete lkFace; }//add by Look
+
 	return callback.get_result();
 }

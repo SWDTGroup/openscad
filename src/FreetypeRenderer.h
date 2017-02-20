@@ -62,6 +62,12 @@ public:
         void set_font(std::string font) {
             this->font = font;
         }
+		//add by Look Begin
+		void set_fontFileName(std::string fontFileName_) {
+			this->fontFileName = fontFileName_;
+			PRINT(this->fontFileName.c_str());
+		}
+		//add by Look End
         void set_direction(std::string direction) {
             this->direction = direction;
         }
@@ -83,6 +89,7 @@ public:
 			<< "\", size = " << params.size
 			<< ", spacing = " << params.spacing
 			<< ", font = \"" << params.font
+			<< ", fontFileName = \"" << params.fontFileName	//add by Look
 			<< "\", direction = \"" << params.direction
 			<< "\", language = \"" << params.language
 			<< (params.script.empty() ? "" : "\", script = \"") << params.script
@@ -95,6 +102,7 @@ public:
     private:
         double size, spacing, fn, fa, fs, segments;
 	std::string text, font, direction, language, script, halign, valign;
+	std::string fontFileName;//add by Look
         
         friend class FreetypeRenderer;
     };

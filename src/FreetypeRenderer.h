@@ -65,7 +65,7 @@ public:
 		//add by Look Begin
 		void set_fontFileName(std::string fontFileName_) {
 			this->fontFileName = fontFileName_;
-			PRINT(this->fontFileName.c_str());
+			//PRINT(this->fontFileName.c_str());
 		}
 		//add by Look End
         void set_direction(std::string direction) {

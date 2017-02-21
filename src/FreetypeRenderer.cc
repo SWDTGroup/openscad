@@ -322,10 +322,10 @@ std::vector<const Geometry *> FreetypeRenderer::render(const FreetypeRenderer::P
 	//modify by Look Begin
 	LKFace *lkFace = NULL;
 	std::string fontFileName = params.fontFileName;
-	PRINT(fontFileName + "---" + params.font);
+	//PRINT(fontFileName + "---" + params.font);
 	if (fontFileName.length() > 0)
 	{
-		PRINT(fontFileName + " is using");
+		//PRINT(fontFileName + " is using");
 		if (fontFileName.find_first_of('\\') != -1 || fontFileName.find_first_of('/') != -1) {
 			PRINT("The font fileName is error!");
 			return std::vector<const Geometry *>();

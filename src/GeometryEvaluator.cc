@@ -627,12 +627,31 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 						PRINT("2d polygon could not use the funcation of polarization!\n");
 					}
 					else if (geom->getDimension() == 3) {
+ 						shared_ptr<PolySet> newps;
  						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
- 						if (ps) {
- 							// If we got a const object, make a copy
- 							shared_ptr<PolySet> newps;
+ 						if (ps==NULL) 
+						{
+
+							shared_ptr<const CGAL_Nef_polyhedron> chN = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
+							if (chN) 
+							{
+								PolySet *ps_new = new PolySet(3);
+								bool err = CGALUtils::createPolySetFromNefPolyhedron3(*chN->p3, *ps_new);
+								if (err) {
+									PRINT("ERROR: Nef->PolySet failed");
+								}
+								else {
+									newps.reset(ps_new);
+								}
+							}	
+						}
+						else
+						{
+							// If we got a const object, make a copy
  							if (res.isConst()) newps.reset(new PolySet(*ps));
- 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
+ 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());							
+						}
+ 						
  							//newps->transform(node.matrix);
 							//TEST: 获取包围盒数据
 							//BoundingBox bbox = newps->getBoundingBox();
@@ -643,40 +662,7 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							BoundingBox bbox = newps->getBoundingBox();
 							((PolarizationNode*)&node)->o_size[0] = bbox.max()[0] - bbox.min()[0];
 							newps->polarization(node.o_size, node.k_xy);
- 							geom = newps;
- 						}
- 						else {
- 							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
- 							assert(N);
- 							// If we got a const object, make a copy
- 							shared_ptr<CGAL_Nef_polyhedron> newN;
- 							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
- 							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
- 							//newN->transform(node.matrix);
-							printf("polarization - CGAL_Nef_polyhedron \n");
- 							geom = newN;
- 						}
-
-
-// 						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
-// 						if (ps) {
-// 							// If we got a const object, make a copy
-// 							shared_ptr<PolySet> newps;
-// 							if (res.isConst()) newps.reset(new PolySet(*ps));
-// 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
-// 							newps->transform(node.matrix);
-// 							geom = newps;
-// 						}
-// 						else {
-// 							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
-// 							assert(N);
-// 							// If we got a const object, make a copy
-// 							shared_ptr<CGAL_Nef_polyhedron> newN;
-// 							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
-// 							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
-// 							newN->transform(node.matrix);
-// 							geom = newN;
-// 						}
+ 							geom = newps; 
 					}
 				}
 			}

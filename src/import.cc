@@ -56,6 +56,8 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 #include <boost/detail/endian.hpp>
 #include <boost/cstdint.hpp>
 
+extern Polygon2d *import_svg(const std::string &filename);
+
 class ImportModule : public AbstractModule
 {
 public:
@@ -105,6 +107,7 @@ AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstanti
 		std::string ext = boost::algorithm::to_lower_copy(extraw);
 		if (ext == ".stl") actualtype = TYPE_STL;
 		else if (ext == ".off") actualtype = TYPE_OFF;
+		else if (ext == ".svg") actualtype = TYPE_SVG;
 		else if (ext == ".dxf") actualtype = TYPE_DXF;
 	}
 
@@ -298,6 +301,11 @@ Geometry *ImportNode::createGeometry() const
 		g = dd.toPolygon2d();
 	}
 		break;
+
+	case TYPE_SVG: {
+		g = import_svg(this->filename);
+ 		break;
+	}
 	default:
 		PRINTB("ERROR: Unsupported file format while trying to import file '%s'", this->filename);
 		g = new PolySet(0);

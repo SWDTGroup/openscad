@@ -8,7 +8,8 @@ enum import_type_e {
 	TYPE_UNKNOWN,
 	TYPE_STL,
 	TYPE_OFF,
-	TYPE_DXF
+	TYPE_DXF,
+	TYPE_SVG
 };
 
 class ImportNode : public LeafNode

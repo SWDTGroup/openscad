@@ -8,6 +8,10 @@
 #ifdef ENABLE_CGAL
 #include "cgalutils.h"
 #endif
+#include <vtkPolyData.h>
+#include <vtkTriangle.h>
+#include <vtkCellArray.h>
+#include <vtkSmartPointer.h>
 
 #include <boost/foreach.hpp>
 
@@ -49,8 +53,14 @@ namespace PolysetUtils {
 	 polyset has simple polygon faces with no holes.
 	 The tessellation will be robust wrt. degenerate and self-intersecting
 */
-	void tessellate_faces(const PolySet &inps, PolySet &outps)
+	void tessellate_faces(const PolySet &inps, PolySet &outps, float max_edge_length = -1)
 	{
+		  vtkSmartPointer<vtkPolyData> vtk_polyData =
+   			 vtkSmartPointer<vtkPolyData>::New();
+
+ 		 vtkSmartPointer<vtkCellArray> vtk_cells =
+   			 vtkSmartPointer<vtkCellArray>::New();	
+ 
 		int degeneratePolygons = 0;
 
 		// Build Indexed PolyMesh
@@ -63,7 +73,27 @@ namespace PolysetUtils {
 				continue;
 			}
 			if (pgon.size() == 3) { // Short-circuit
-				outps.append_poly(pgon);
+				
+				
+				if(max_edge_length > 0)
+				{
+					int ii=0;
+					vtkSmartPointer<vtkTriangle> vtk_triangle =
+  						  vtkSmartPointer<vtkTriangle>::New();
+					BOOST_FOREACH (const Vector3d &v, pgon) 
+					{
+						// Create vertex indices and remove consecutive duplicate vertices
+						int idx = allVertices.lookup(v.cast<float>());
+ 					 	vtk_triangle->GetPointIds()->SetId ( ii, idx );
+  					}
+
+					vtk_cells->InsertNextCell(vtk_triangle); 
+
+				}
+				else
+					outps.append_poly(pgon);
+
+				
 				continue;
 			}
 			
@@ -95,15 +125,58 @@ namespace PolysetUtils {
 				bool err = GeometryUtils::tessellatePolygonWithHoles(verts, faces, triangles, NULL);
 				if (!err) {
 					BOOST_FOREACH(const IndexedTriangle &t, triangles) {
-						outps.append_poly();
-						outps.append_vertex(verts[t[0]]);
-						outps.append_vertex(verts[t[1]]);
-						outps.append_vertex(verts[t[2]]);
+						
+						if(max_edge_length > 0)
+						{
+							vtkSmartPointer<vtkTriangle> vtk_triangle =
+  								  vtkSmartPointer<vtkTriangle>::New();
+					 		vtk_triangle->GetPointIds()->SetId ( 0, t[0]);
+					 		vtk_triangle->GetPointIds()->SetId ( 1, t[1]);
+					 		vtk_triangle->GetPointIds()->SetId ( 2, t[2] );
+							vtk_cells->InsertNextCell(vtk_triangle); 
+						}
+						else
+						{
+							outps.append_poly();
+							outps.append_vertex(verts[t[0]]);
+							outps.append_vertex(verts[t[1]]);
+							outps.append_vertex(verts[t[2]]);
+						}
+	
 					}
 				}
 			}
 		}
 		if (degeneratePolygons > 0) PRINT("WARNING: PolySet has degenerate polygons");
+		
+		if(max_edge_length > 0)
+		{
+			vtkSmartPointer<vtkPoints> vtk_points =
+   				 vtkSmartPointer<vtkPoints>::New();
+			const Vector3f*  e_pts = allVertices.getArray();
+			for(unsigned int i=0;i<allVertices.size();i++)
+			{
+				vtk_points->InsertNextPoint((double)e_pts[i][0], (double)e_pts[i][1], (double)e_pts[i][2]);
+			}
+			vtk_polyData->SetPoints ( vtk_points);
+  			vtk_polyData->SetPolys ( vtk_cells);
+
+			//subdivide ploydata by max_edge_length
+			
+			 vtkPolyData *vtk_polyData;
+			 vtkIdType npts, *pts;
+			 for(vtkIdType i=0;i<vtk_polyData->GetNumberOfCells();i++)
+			 {
+				 vtk_polyData->GetCellPoints(i, npts, pts);
+				 outps.append_poly();
+				 for (int k = 0;k<3;k++)
+				 {
+					double* vertex = vtk_polyData->GetPoint(pts[k]);
+				 	outps.append_vertex(Vector3f((float)vertex[0],(float)vertex[1],(float)vertex[2]));
+				 }
+			 }			
+
+		}
 	}
 
 	bool is_approximately_convex(const PolySet &ps) {

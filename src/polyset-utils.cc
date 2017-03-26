@@ -8,14 +8,151 @@
 #ifdef ENABLE_CGAL
 #include "cgalutils.h"
 #endif
-#include <vtkPolyData.h>
-#include <vtkTriangle.h>
-#include <vtkCellArray.h>
-#include <vtkSmartPointer.h>
+
 
 #include <boost/foreach.hpp>
 
 namespace PolysetUtils {
+
+
+
+	double getLen2BetweenAB(const double A[3], const double B[3])
+	{
+		const double *orderPtPtrs[2];
+		if (A[0] > B[0] || (A[0]==B[0] && (A[1]>B[1] || (A[1]==B[1]&&A[2]>B[2]))))
+		{
+			orderPtPtrs[0] = A;
+			orderPtPtrs[1] = B;
+		}
+		else
+		{
+			orderPtPtrs[0] = B;
+			orderPtPtrs[1] = A;
+		}
+		double v3d[3];
+		v3d[0] = orderPtPtrs[0][0] - orderPtPtrs[1][0];
+		v3d[1] = orderPtPtrs[0][1] - orderPtPtrs[1][1];
+		v3d[2] = orderPtPtrs[0][2] - orderPtPtrs[1][2];
+		return v3d[0]*v3d[0] + v3d[1]*v3d[1] + v3d[2]*v3d[2];
+	}
+
+	//三角形类
+
+	struct SBTriangle {
+
+		double vertices[3][3];
+		double edgeLen2s[3];	// 0--[2-0]	1--[0-1] 2--[1-2]
+		int longestEdgeId;
+
+		void install()
+		{
+			double longestEdgeLen2 = -1;
+			for (int preI = 2, i = 0; i < 3; preI=i,i++)
+			{
+				edgeLen2s[i] = getLen2BetweenAB(vertices[preI], vertices[i]);
+				if (edgeLen2s[i] > longestEdgeLen2)
+				{
+					longestEdgeLen2 = edgeLen2s[i];
+					longestEdgeId = i;
+				}
+			}
+		}
+	};
+
+	void recurseSubDivideTriangle(std::vector<SBTriangle> &leafTriangles, std::stack<SBTriangle> &waitingSubdivideTris, const SBTriangle &triangle, const double maxLen2)
+	{
+
+		if (triangle.edgeLen2s[triangle.longestEdgeId] > maxLen2)
+		{
+			double newPt[3];
+			int idB = triangle.longestEdgeId; //AB为最长边
+			int idA = (idB + 2) % 3;
+			int idC = (idB + 1) % 3;
+			const double *ptA = triangle.vertices[idA];
+			const double *ptB = triangle.vertices[idB];
+			//const double *ptC = triangle.vertices[idC];
+			newPt[0] = ptA[0] > ptB[0] ? (ptA[0] + ptB[0]) / 2 : (ptB[0] + ptA[0]) / 2;
+			newPt[1] = ptA[1] > ptB[1] ? (ptA[1] + ptB[1]) / 2 : (ptB[1] + ptA[1]) / 2;
+			newPt[2] = ptA[2] > ptB[2] ? (ptA[2] + ptB[2]) / 2 : (ptB[2] + ptA[2]) / 2;
+
+			//?阜秩切?
+
+			{
+
+				SBTriangle newTri;
+				memcpy(newTri.vertices[0], triangle.vertices[idA], sizeof(double)*3);
+				memcpy(newTri.vertices[1], newPt, sizeof(double)*3);
+				memcpy(newTri.vertices[2], triangle.vertices[idC], sizeof(double)*3);
+				newTri.install();
+				waitingSubdivideTris.push(newTri);
+			}
+			//细分三角形2
+
+			{
+
+				SBTriangle newTri;
+				memcpy(newTri.vertices[0], newPt, sizeof(double)*3);
+				memcpy(newTri.vertices[1], triangle.vertices[idB], sizeof(double)*3);
+				memcpy(newTri.vertices[2], triangle.vertices[idC], sizeof(double)*3);
+				newTri.install();
+				waitingSubdivideTris.push(newTri);
+			}
+		}
+		else
+		{
+			leafTriangles.push_back(triangle);
+		}
+	}
+
+	void polyset_subdivide(const PolySet &inps, PolySet &outps, double max_edge_length)
+	{
+		printf("polyset_subdivide %d polygons, max edge length %lf\n", inps.polygons.size(), max_edge_length);							
+
+		double maxLen2 = max_edge_length * max_edge_length;
+
+		std::stack<SBTriangle> waitingSubdivideTris;
+		///模型读取为三角形
+
+		
+		BOOST_FOREACH(const Polygon &pgon, inps.polygons) {
+			SBTriangle tri;
+			int i=0;
+			BOOST_FOREACH (const Vector3d &v, pgon) {
+				tri.vertices[i][0] = v[0];
+				tri.vertices[i][1] = v[1];
+				tri.vertices[i][2] = v[2];
+				i++;
+			}
+			tri.install();
+			waitingSubdivideTris.push(tri);
+
+		}
+
+		std::vector<SBTriangle> leafTriangles;
+		//leafTriangles.reserve(waitingSubdivideTris.size() * 1.5);
+		while(!waitingSubdivideTris.empty())
+		{
+			SBTriangle theTri = waitingSubdivideTris.top();
+			waitingSubdivideTris.pop();
+			recurseSubDivideTriangle(leafTriangles, waitingSubdivideTris, theTri, maxLen2);
+		}
+
+		for (unsigned int i = 0; i < leafTriangles.size(); i++)
+		{
+			SBTriangle &tri = leafTriangles[i];
+
+			outps.append_poly();
+			outps.append_vertex(tri.vertices[0][0], tri.vertices[0][1], tri.vertices[0][2]);
+			outps.append_vertex(tri.vertices[1][0], tri.vertices[1][1], tri.vertices[1][2]);
+			outps.append_vertex(tri.vertices[2][0], tri.vertices[2][1], tri.vertices[2][2]);
+		}
+
+		printf("polyset_subdivide done. output %d %d polygons\n", outps.polygons.size(), leafTriangles.size());							
+
+	}
+
+
+
 
 	// Project all polygons (also back-facing) into a Polygon2d instance.
   // It's important to select all faces, since filtering by normal vector here
@@ -53,14 +190,10 @@ namespace PolysetUtils {
 	 polyset has simple polygon faces with no holes.
 	 The tessellation will be robust wrt. degenerate and self-intersecting
 */
-	void tessellate_faces(const PolySet &inps, PolySet &outps, float max_edge_length = -1)
-	{
-		  vtkSmartPointer<vtkPolyData> vtk_polyData =
-   			 vtkSmartPointer<vtkPolyData>::New();
 
- 		 vtkSmartPointer<vtkCellArray> vtk_cells =
-   			 vtkSmartPointer<vtkCellArray>::New();	
- 
+	
+	void tessellate_faces(const PolySet &inps, PolySet &outps)
+	{
 		int degeneratePolygons = 0;
 
 		// Build Indexed PolyMesh
@@ -73,27 +206,7 @@ namespace PolysetUtils {
 				continue;
 			}
 			if (pgon.size() == 3) { // Short-circuit
-				
-				
-				if(max_edge_length > 0)
-				{
-					int ii=0;
-					vtkSmartPointer<vtkTriangle> vtk_triangle =
-  						  vtkSmartPointer<vtkTriangle>::New();
-					BOOST_FOREACH (const Vector3d &v, pgon) 
-					{
-						// Create vertex indices and remove consecutive duplicate vertices
-						int idx = allVertices.lookup(v.cast<float>());
- 					 	vtk_triangle->GetPointIds()->SetId ( ii, idx );
-  					}
-
-					vtk_cells->InsertNextCell(vtk_triangle); 
-
-				}
-				else
-					outps.append_poly(pgon);
-
-				
+				outps.append_poly(pgon);
 				continue;
 			}
 			
@@ -125,58 +238,15 @@ namespace PolysetUtils {
 				bool err = GeometryUtils::tessellatePolygonWithHoles(verts, faces, triangles, NULL);
 				if (!err) {
 					BOOST_FOREACH(const IndexedTriangle &t, triangles) {
-						
-						if(max_edge_length > 0)
-						{
-							vtkSmartPointer<vtkTriangle> vtk_triangle =
-  								  vtkSmartPointer<vtkTriangle>::New();
-					 		vtk_triangle->GetPointIds()->SetId ( 0, t[0]);
-					 		vtk_triangle->GetPointIds()->SetId ( 1, t[1]);
-					 		vtk_triangle->GetPointIds()->SetId ( 2, t[2] );
-							vtk_cells->InsertNextCell(vtk_triangle); 
-						}
-						else
-						{
-							outps.append_poly();
-							outps.append_vertex(verts[t[0]]);
-							outps.append_vertex(verts[t[1]]);
-							outps.append_vertex(verts[t[2]]);
-						}
-	
+						outps.append_poly();
+						outps.append_vertex(verts[t[0]]);
+						outps.append_vertex(verts[t[1]]);
+						outps.append_vertex(verts[t[2]]);
 					}
 				}
 			}
 		}
 		if (degeneratePolygons > 0) PRINT("WARNING: PolySet has degenerate polygons");
-		
-		if(max_edge_length > 0)
-		{
-			vtkSmartPointer<vtkPoints> vtk_points =
-   				 vtkSmartPointer<vtkPoints>::New();
-			const Vector3f*  e_pts = allVertices.getArray();
-			for(unsigned int i=0;i<allVertices.size();i++)
-			{
-				vtk_points->InsertNextPoint((double)e_pts[i][0], (double)e_pts[i][1], (double)e_pts[i][2]);
-			}
-			vtk_polyData->SetPoints ( vtk_points);
-  			vtk_polyData->SetPolys ( vtk_cells);
-
-			//subdivide ploydata by max_edge_length
-			
-			 vtkPolyData *vtk_polyData;
-			 vtkIdType npts, *pts;
-			 for(vtkIdType i=0;i<vtk_polyData->GetNumberOfCells();i++)
-			 {
-				 vtk_polyData->GetCellPoints(i, npts, pts);
-				 outps.append_poly();
-				 for (int k = 0;k<3;k++)
-				 {
-					double* vertex = vtk_polyData->GetPoint(pts[k]);
-				 	outps.append_vertex(Vector3f((float)vertex[0],(float)vertex[1],(float)vertex[2]));
-				 }
-			 }			
-
-		}
 	}
 
 	bool is_approximately_convex(const PolySet &ps) {

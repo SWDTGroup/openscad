@@ -54,12 +54,16 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 {
 	PolarizationNode *node = new PolarizationNode(inst);
 
+	node->max_edge_lendgth = 1.0;
+	
+	node->angle = 360;
 	
 	AssignmentList args;
 
 	switch (this->type) {
 	case polarization_normal:
-		args += Assignment("arr");
+		args += Assignment("angle"), Assignment("max_edge_lendgth");
+;
 		break;
 	default:
 		assert(false);
@@ -71,16 +75,19 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 
 	if (this->type == polarization_normal)
 	{
-		ValuePtr arr = c.lookup_variable("arr");
-		if ( arr->toVector().size() != 4 ) {
-			assert(!"polarization's arguments count is not 4!");
+		ValuePtr angle = c.lookup_variable("angle");
+		if (angle->type() == Value::NUMBER)
+		{
+			node->angle  = angle->toDouble();
 		}
-		arr->toVector()[0]->getDouble(node->o_size[0]);
-		arr->toVector()[1]->getDouble(node->o_size[1]);
-		arr->toVector()[2]->getDouble(node->k_xy[0]);
-		arr->toVector()[3]->getDouble(node->k_xy[1]);
-		// delete output
-		//printf("compiled polarization(%f, %f, %f, %f)\n", node->o_size[0], node->o_size[1], node->k_xy[0], node->k_xy[1]);
+
+
+		ValuePtr max_edge_lendgth = c.lookup_variable("max_edge_lendgth");
+		if (max_edge_lendgth->type() == Value::NUMBER)
+		{
+			node->max_edge_lendgth = max_edge_lendgth->toDouble();
+		}
+
 	}
 
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);
@@ -93,13 +100,7 @@ std::string PolarizationNode::toString() const
 {
 	std::stringstream stream;
 
-	stream << "polarization([";
-	stream << o_size[0] << ", ";
-	stream << o_size[1] << ", ";
-	stream << k_xy[0] << ", ";
-	stream << k_xy[1];
-	stream << "])";
-
+	stream << "polarization(" << angle << ", " <<  max_edge_lendgth <<")";
 	return stream.str();
 }
 

@@ -15,6 +15,7 @@ public:
 	virtual std::string toString() const;
 	virtual std::string name() const;
 
-	double o_size[2];
-	double k_xy[2];
+	double o_size;
+	double angle;
+	double max_edge_lendgth;
 };

@@ -171,12 +171,12 @@ void PolySet::transform(const Transform3d &mat)
 }
 
 //add by Look begin
-void PolySet::polarization(const double o_size[2], const double k_xy[2])
+void PolySet::polarization(const double o_size, const double angle)
 {
 	BOOST_FOREACH(Polygon &p, this->polygons) {
 		BOOST_FOREACH(Vector3d &v, p) {
 			double r = v.z();
-			double theta = v.x() / o_size[0] * M_PI * 2;
+			double theta = v.x() /  o_size * M_PI * 2 * angle / 360;
 			v(0) = ( r * sin(theta) );
 			v(2) = ( r * cos(theta) );
 		}

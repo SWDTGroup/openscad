@@ -645,13 +645,19 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 								}
 							}	
 						}
-						else
+						else 
 						{
 							// If we got a const object, make a copy
  							if (res.isConst()) newps.reset(new PolySet(*ps));
  							else newps = dynamic_pointer_cast<PolySet>(res.ptr());							
 						}
- 						
+
+							shared_ptr<PolySet> newps_subdivided;
+							
+							newps_subdivided.reset( new PolySet(3));
+							
+							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, ((PolarizationNode*)&node)->max_edge_lendgth);
+ 							
  							//newps->transform(node.matrix);
 							//TEST: 获取包围盒数据
 							//BoundingBox bbox = newps->getBoundingBox();
@@ -659,10 +665,10 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							//	bbox.max()[0] - bbox.min()[0], bbox.max()[1] - bbox.min()[1], bbox.max()[2] - bbox.min()[2]);
 
 							//注意：强制把极化周长设置为node模型的周长
-							BoundingBox bbox = newps->getBoundingBox();
-							((PolarizationNode*)&node)->o_size[0] = bbox.max()[0] - bbox.min()[0];
-							newps->polarization(node.o_size, node.k_xy);
- 							geom = newps; 
+							BoundingBox bbox = newps_subdivided->getBoundingBox();
+							double o_size = bbox.max()[0] - bbox.min()[0];
+							newps_subdivided->polarization(o_size, node.angle);
+ 							geom = newps_subdivided; 
 					}
 				}
 			}

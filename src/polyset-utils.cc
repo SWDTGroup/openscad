@@ -14,26 +14,41 @@
 
 namespace PolysetUtils {
 
+	
 
-
-	double getLen2BetweenAB(const double A[3], const double B[3])
+	double getLen2BetweenAB_axis(const double A[3], const double B[3],  subdivide_axis axis)
 	{
-		const double *orderPtPtrs[2];
-		if (A[0] > B[0] || (A[0]==B[0] && (A[1]>B[1] || (A[1]==B[1]&&A[2]>B[2]))))
+		switch(axis)
 		{
-			orderPtPtrs[0] = A;
-			orderPtPtrs[1] = B;
-		}
-		else
+
+		case subdivide_axis_x:
+			return (A[0]-B[0])*(A[0]-B[0]);
+		case subdivide_axis_y:
+			return (A[1]-B[1])*(A[1]-B[1]);
+
+		case subdivide_axis_z:
+			return (A[2]-B[2])*(A[2]-B[2]);
+
+		default:		
 		{
-			orderPtPtrs[0] = B;
-			orderPtPtrs[1] = A;
+			const double *orderPtPtrs[2];
+			if (A[0] > B[0] || (A[0]==B[0] && (A[1]>B[1] || (A[1]==B[1]&&A[2]>B[2]))))
+			{
+				orderPtPtrs[0] = A;
+				orderPtPtrs[1] = B;
+			}
+			else
+			{
+				orderPtPtrs[0] = B;
+				orderPtPtrs[1] = A;
+			}
+			double v3d[3];
+			v3d[0] = orderPtPtrs[0][0] - orderPtPtrs[1][0];
+			v3d[1] = orderPtPtrs[0][1] - orderPtPtrs[1][1];
+			v3d[2] = orderPtPtrs[0][2] - orderPtPtrs[1][2];
+			return v3d[0]*v3d[0] + v3d[1]*v3d[1] + v3d[2]*v3d[2];
 		}
-		double v3d[3];
-		v3d[0] = orderPtPtrs[0][0] - orderPtPtrs[1][0];
-		v3d[1] = orderPtPtrs[0][1] - orderPtPtrs[1][1];
-		v3d[2] = orderPtPtrs[0][2] - orderPtPtrs[1][2];
-		return v3d[0]*v3d[0] + v3d[1]*v3d[1] + v3d[2]*v3d[2];
+		}
 	}
 
 	//三角形类
@@ -44,12 +59,12 @@ namespace PolysetUtils {
 		double edgeLen2s[3];	// 0--[2-0]	1--[0-1] 2--[1-2]
 		int longestEdgeId;
 
-		void install()
+		void install(subdivide_axis axis)
 		{
 			double longestEdgeLen2 = -1;
 			for (int preI = 2, i = 0; i < 3; preI=i,i++)
 			{
-				edgeLen2s[i] = getLen2BetweenAB(vertices[preI], vertices[i]);
+				edgeLen2s[i] = getLen2BetweenAB_axis(vertices[preI], vertices[i], axis);
 				if (edgeLen2s[i] > longestEdgeLen2)
 				{
 					longestEdgeLen2 = edgeLen2s[i];
@@ -59,7 +74,7 @@ namespace PolysetUtils {
 		}
 	};
 
-	void recurseSubDivideTriangle(std::vector<SBTriangle> &leafTriangles, std::stack<SBTriangle> &waitingSubdivideTris, const SBTriangle &triangle, const double maxLen2)
+	void recurseSubDivideTriangle(std::vector<SBTriangle> &leafTriangles, std::stack<SBTriangle> &waitingSubdivideTris, const SBTriangle &triangle, const double maxLen2,  subdivide_axis axis)
 	{
 
 		if (triangle.edgeLen2s[triangle.longestEdgeId] > maxLen2)
@@ -83,7 +98,7 @@ namespace PolysetUtils {
 				memcpy(newTri.vertices[0], triangle.vertices[idA], sizeof(double)*3);
 				memcpy(newTri.vertices[1], newPt, sizeof(double)*3);
 				memcpy(newTri.vertices[2], triangle.vertices[idC], sizeof(double)*3);
-				newTri.install();
+				newTri.install(axis);
 				waitingSubdivideTris.push(newTri);
 			}
 			//细分三角形2
@@ -94,7 +109,7 @@ namespace PolysetUtils {
 				memcpy(newTri.vertices[0], newPt, sizeof(double)*3);
 				memcpy(newTri.vertices[1], triangle.vertices[idB], sizeof(double)*3);
 				memcpy(newTri.vertices[2], triangle.vertices[idC], sizeof(double)*3);
-				newTri.install();
+				newTri.install(axis);
 				waitingSubdivideTris.push(newTri);
 			}
 		}
@@ -104,7 +119,7 @@ namespace PolysetUtils {
 		}
 	}
 
-	void polyset_subdivide(const PolySet &inps, PolySet &outps, double max_edge_length)
+	void polyset_subdivide(const PolySet &inps, PolySet &outps, double max_edge_length,  subdivide_axis axis)
 	{
 		printf("polyset_subdivide %d polygons, max edge length %lf\n", inps.polygons.size(), max_edge_length);							
 
@@ -123,7 +138,7 @@ namespace PolysetUtils {
 				tri.vertices[i][2] = v[2];
 				i++;
 			}
-			tri.install();
+			tri.install(axis);
 			waitingSubdivideTris.push(tri);
 
 		}
@@ -134,7 +149,7 @@ namespace PolysetUtils {
 		{
 			SBTriangle theTri = waitingSubdivideTris.top();
 			waitingSubdivideTris.pop();
-			recurseSubDivideTriangle(leafTriangles, waitingSubdivideTris, theTri, maxLen2);
+			recurseSubDivideTriangle(leafTriangles, waitingSubdivideTris, theTri, maxLen2, axis);
 		}
 
 		for (unsigned int i = 0; i < leafTriangles.size(); i++)

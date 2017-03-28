@@ -656,7 +656,7 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							
 							newps_subdivided.reset( new PolySet(3));
 							
-							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, ((PolarizationNode*)&node)->max_edge_lendgth);
+							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, ((PolarizationNode*)&node)->max_edge_lendgth, PolysetUtils::subdivide_axis_x);
  							
  							//newps->transform(node.matrix);
 							//TEST: 获取包围盒数据

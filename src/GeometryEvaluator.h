@@ -26,6 +26,7 @@ public:
 	virtual Response visit(State &state, const LeafNode &node);
 	virtual Response visit(State &state, const TransformNode &node);
 	virtual Response visit(State &state, const PolarizationNode &node);  //add by Look
+	virtual Response visit(State &state, const DecimationNode &node);  //add by zwbrush
 	virtual Response visit(State &state, const CsgNode &node);
 	virtual Response visit(State &state, const CgaladvNode &node);
 	virtual Response visit(State &state, const ProjectionNode &node);

@@ -56,6 +56,13 @@ public:
 	  return visit(state, (const class AbstractNode &)node);
   }
   //add by Look end
+
+ //add by zwbrush begin
+  virtual Response visit(class State &state, const class DecimationNode &node) {
+	  return visit(state, (const class AbstractNode &)node);
+  }
+  //add by zwbrush end
+
   virtual Response visit(class State &state, const class ColorNode &node) {
 		return visit(state, (const class AbstractNode &)node);
 	}

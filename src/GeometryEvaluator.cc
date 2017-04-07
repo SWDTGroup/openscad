@@ -9,6 +9,7 @@
 #include "offsetnode.h"
 #include "transformnode.h"
 #include "polarizationNode.h"//add by Look
+#include "decimationNode.h"   //add by zwbrush
 #include "linearextrudenode.h"
 #include "rotateextrudenode.h"
 #include "csgnode.h"
@@ -28,6 +29,7 @@
 #include "dxfdata.h"
 
 #include <algorithm>
+#include <queue>
 #include <boost/foreach.hpp>
 
 #include <CGAL/convex_hull_2.h>
@@ -418,6 +420,146 @@ Response GeometryEvaluator::visit(State &state, const OffsetNode &node)
 	}
 	return ContinueTraversal;
 }
+
+//add by zwbrush begin
+struct struct_pt 
+{
+	int x;
+	int y;
+	double error;
+};
+
+struct cmp_struct_pt{  
+    bool operator()(struct_pt a, struct_pt b){  
+        if(a.error > b.error)  return true;  
+        return false;  
+    }  
+};
+
+static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d &poly)
+{
+	std::priority_queue<struct struct_pt, std::vector<struct struct_pt>, cmp_struct_pt> p_queue;
+	std::vector<std::vector<bool> > pt_vecs;
+	pt_vecs.reserve(poly.outlines().size());
+
+	unsigned int pt_num = 0;
+	for (unsigned int o_idx = 0;o_idx < poly.outlines().size();o_idx++) {
+			const Outline2d &o = poly.outlines()[o_idx];
+			pt_num += o.vertices.size();
+	}	
+	if(pt_num <= node.target)
+		return NULL;
+
+	for (unsigned int o_idx = 0;o_idx < poly.outlines().size();o_idx++) {
+			
+		
+		const Outline2d &o = poly.outlines()[o_idx];
+		std::vector<bool> pt_vec;
+		pt_vec.reserve(o.vertices.size());
+
+		for (unsigned int v_idx = 0;v_idx < o.vertices.size();v_idx++) {
+
+			int prev = v_idx == 0 ?  (o.vertices.size()-1) : (v_idx-1);
+			int next = v_idx == o.vertices.size() -1 ?  0 : (v_idx+1);
+			struct_pt pt_priority;
+			pt_priority.x = o_idx;
+			pt_priority.y =	 v_idx;
+					Eigen::Vector2d e1 = o.vertices[v_idx]  - o.vertices[prev]; 
+ 			Eigen::Vector2d e2 = o.vertices[next]  - o.vertices[prev]; 
+			double e2_long2 = e2[0] * e2[0] + e2[1]*e2[1];
+			if( e2_long2 ==0.0)
+				pt_priority.error = 0.0;
+			else
+			{
+				pt_priority.error = e1.dot(e2)/ e2.dot(e2); //by angle
+				//pt_priority.error = fabs(e1[0]*e2[1] - e1[1]*e2[0]) / sqrt(e2_long2); //by distance
+			}
+			p_queue.push(pt_priority);
+			
+			pt_vec.push_back(true) ;
+				}
+		pt_vecs.push_back(pt_vec);
+	}
+//	printf("origin size %d  dciamate to %d\n", p_queue.size(), node.target);
+	if(node.target>0 && p_queue.size() > node.target)
+	{
+ 		unsigned int decimate_num = p_queue.size() -  node.target ;
+		for(unsigned int i =0;i<decimate_num ;i++)
+		{
+			struct_pt pt_delete = p_queue.top();
+			pt_vecs[pt_delete.x][pt_delete.y] = false;
+			p_queue.pop();
+		}
+	}
+//	printf("remain size %d\n", p_queue.size());
+	
+	Polygon2d  new_poly;
+	int cc = 0;
+	for (unsigned int o_idx = 0;o_idx < pt_vecs.size();o_idx++) {
+		
+		std::vector<bool> &pt_vec = pt_vecs[o_idx];
+		
+		const Outline2d &o = poly.outlines()[o_idx];
+		Outline2d new_outline;
+		for (unsigned int v_idx = 0;v_idx < pt_vec.size();v_idx++) {
+			if(pt_vec[v_idx])
+			{
+				new_outline.vertices.push_back(o.vertices[v_idx]);
+			}
+		}
+		if(new_outline.vertices.size()<3)
+			continue;
+		cc += new_outline.vertices.size();
+		new_poly.addOutline(new_outline);
+	}
+	
+//	printf("remain size after %d\n", cc);
+	
+
+	ClipperLib::Clipper clipper;
+	clipper.AddPaths(ClipperUtils::fromPolygon2d(new_poly), ClipperLib::ptSubject, true);
+	ClipperLib::PolyTree result;
+	clipper.Execute(ClipperLib::ctUnion, result, ClipperLib::pftPositive);
+
+	return ClipperUtils::toPolygon2d(result);
+	
+	
+
+	
+
+//	return new_poly;
+}
+
+
+Response GeometryEvaluator::visit(State &state, const DecimationNode &node)
+{
+	if (state.isPrefix() && isSmartCached(node)) return PruneTraversal;
+	if (state.isPostfix()) {
+		shared_ptr<const Geometry> geom;
+		if (!isSmartCached(node)) {
+			const Geometry *geometry = applyToChildren2D(node, OPENSCAD_UNION);
+			if (geometry) {
+				const Polygon2d *polygon = dynamic_cast<const Polygon2d*>(geometry);
+				const Polygon2d *result = decimatePolygon2d(node, *polygon );
+				if(result ==NULL)
+					geom.reset(geometry);
+				else
+				{
+					geom.reset(result);
+					delete geometry;
+				}
+			}
+		}
+		else {
+			geom = smartCacheGet(node, false);
+		}
+		addToParent(state, node, geom);
+	}
+	return ContinueTraversal;
+}
+
+//add by zwbrush end
+
 
 /*!
    RenderNodes just pass on convexity

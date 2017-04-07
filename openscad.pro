@@ -297,6 +297,7 @@ HEADERS += src/typedefs.h \
            src/importnode.h \
            src/transformnode.h \
            src/polarizationNode.h \
+           src/decimationNode.h \
            src/colornode.h \
            src/rendernode.h \
            src/textnode.h \
@@ -395,6 +396,7 @@ SOURCES += \
            src/csgops.cc \
            src/transform.cc \
            src/polarization.cc \
+           src/decimation.cc \
            src/color.cc \
            src/primitives.cc \
            src/projection.cc \

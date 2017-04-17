@@ -39,6 +39,7 @@ extern void register_builtin_csgops();
 extern void register_builtin_transform();
 extern void register_builtin_polarization();//add by Look
 extern void register_builtin_decimation();//add by zwbrush
+extern void register_builtin_align();//add by zwbrush
 extern void register_builtin_color();
 extern void register_builtin_primitives();
 extern void register_builtin_surface();

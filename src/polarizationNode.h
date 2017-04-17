@@ -8,7 +8,11 @@
 class PolarizationNode : public AbstractNode
 {
 public:
-	PolarizationNode(const ModuleInstantiation *mi) : AbstractNode(mi) { }
+	PolarizationNode(const ModuleInstantiation *mi) : AbstractNode(mi) { 
+	fn = fs = fa = 0;
+	o_size = 0;
+	angle = 360;
+}
   virtual Response accept(class State &state, Visitor &visitor) const {
 		return visitor.visit(state, *this);
 	}
@@ -17,5 +21,6 @@ public:
 
 	double o_size;
 	double angle;
-	double max_edge_lendgth;
+	double fn, fs, fa;
+
 };

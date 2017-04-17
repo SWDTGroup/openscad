@@ -16,6 +16,15 @@ CGAL_Nef_polyhedron::CGAL_Nef_polyhedron(const CGAL_Nef_polyhedron &src)
 	if (src.p3) this->p3.reset(new CGAL_Nef_polyhedron3(*src.p3));
 }
 
+BoundingBox CGAL_Nef_polyhedron::getBoundingBox() const
+{
+	CGAL_Iso_cuboid_3 bb = CGALUtils::boundingBox(*p3);
+	CGAL_Nef_polyhedron3::Point_3 pmin = bb.min();
+	CGAL_Nef_polyhedron3::Point_3 pmax = bb.max();
+	return BoundingBox(Vector3d(CGAL::to_double(bb.xmin()), CGAL::to_double(bb.ymin()), CGAL::to_double(bb.zmin())),  Vector3d(CGAL::to_double(bb.xmax()), CGAL::to_double(bb.ymax()), CGAL::to_double(bb.zmax())));
+	
+}
+
 CGAL_Nef_polyhedron& CGAL_Nef_polyhedron::operator+=(const CGAL_Nef_polyhedron &other)
 {
 	(*this->p3) += (*other.p3);

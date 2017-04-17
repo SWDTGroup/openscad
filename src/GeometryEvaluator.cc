@@ -10,6 +10,7 @@
 #include "transformnode.h"
 #include "polarizationNode.h"//add by Look
 #include "decimationNode.h"   //add by zwbrush
+#include "alignNode.h"   //add by zwbrush
 #include "linearextrudenode.h"
 #include "rotateextrudenode.h"
 #include "csgnode.h"
@@ -31,6 +32,7 @@
 #include <algorithm>
 #include <queue>
 #include <boost/foreach.hpp>
+#include <boost/heap/binomial_heap.hpp>
 
 #include <CGAL/convex_hull_2.h>
 #include <CGAL/Point_2.h>
@@ -428,18 +430,49 @@ struct struct_pt
 	int y;
 	double error;
 };
+	
 
-struct cmp_struct_pt{  
-    bool operator()(struct_pt a, struct_pt b){  
+struct cmp_pt{  
+    bool operator()(const struct_pt& a, const struct_pt& b) const{  
         if(a.error > b.error)  return true;  
         return false;  
     }  
 };
 
+
+typedef typename boost::heap::binomial_heap < struct_pt, boost::heap::compare<cmp_pt> > pt_priority_queue;
+
+struct struct_pt_link 
+{
+	Eigen::Vector2d pt;
+	int prev ;
+	int next;
+	pt_priority_queue::handle_type self;
+	bool exist;
+};
+
+static double computerError(Eigen::Vector2d pt, Eigen::Vector2d pt_prev, Eigen::Vector2d pt_next)
+{
+	Eigen::Vector2d e1 = pt  - pt_prev; 
+ 	Eigen::Vector2d e2 =pt_next  - pt; 
+	double e2_long2 = e2[0] * e2[0] + e2[1]*e2[1];
+	
+	double priority_error;
+	if( e2_long2 ==0.0)
+		priority_error=0.0;
+	else
+	{
+		//priority_error= e1.dot(e2)/ e2.dot(e2); //by angle.  normal ?
+		priority_error= fabs(e1[0]*e2[1] - e1[1]*e2[0]) / sqrt(e2_long2); //by distance
+	}
+//	printf("priority_error %lf\n", priority_error);
+	return priority_error;
+}
+
 static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d &poly)
 {
-	std::priority_queue<struct struct_pt, std::vector<struct struct_pt>, cmp_struct_pt> p_queue;
-	std::vector<std::vector<bool> > pt_vecs;
+	pt_priority_queue p_queue;
+	std::vector<std::vector<struct_pt_link> > pt_vecs;
 	pt_vecs.reserve(poly.outlines().size());
 
 	unsigned int pt_num = 0;
@@ -454,9 +487,8 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 			
 		
 		const Outline2d &o = poly.outlines()[o_idx];
-		std::vector<bool> pt_vec;
+		std::vector<struct_pt_link> pt_vec;
 		pt_vec.reserve(o.vertices.size());
-
 		for (unsigned int v_idx = 0;v_idx < o.vertices.size();v_idx++) {
 
 			int prev = v_idx == 0 ?  (o.vertices.size()-1) : (v_idx-1);
@@ -464,20 +496,31 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 			struct_pt pt_priority;
 			pt_priority.x = o_idx;
 			pt_priority.y =	 v_idx;
-					Eigen::Vector2d e1 = o.vertices[v_idx]  - o.vertices[prev]; 
- 			Eigen::Vector2d e2 = o.vertices[next]  - o.vertices[prev]; 
-			double e2_long2 = e2[0] * e2[0] + e2[1]*e2[1];
-			if( e2_long2 ==0.0)
-				pt_priority.error = 0.0;
-			else
-			{
-				pt_priority.error = e1.dot(e2)/ e2.dot(e2); //by angle
-				//pt_priority.error = fabs(e1[0]*e2[1] - e1[1]*e2[0]) / sqrt(e2_long2); //by distance
-			}
-			p_queue.push(pt_priority);
+			pt_priority.error = computerError(o.vertices[v_idx], o.vertices[prev], o.vertices[next]);
+	//		printf("##x= %d, y = %d, error = %lf\n", pt_priority.x, pt_priority.y, pt_priority.error);
+
+			pt_priority_queue::handle_type ha =  p_queue.push(pt_priority);
+			struct_pt_link link;
+			link.exist = true;
+			link.self = ha;
+			link.pt = o.vertices[v_idx];
 			
-			pt_vec.push_back(true) ;
-				}
+			if(v_idx>0) 
+			{
+				link.prev = prev;
+				pt_vec[prev].next = v_idx;
+			}
+
+			if(v_idx == o.vertices.size() -1)
+			{
+				pt_vec[0].prev = v_idx;
+				link.next = 0;
+			}
+
+			pt_vec.push_back(link) ;
+			
+				
+		}
 		pt_vecs.push_back(pt_vec);
 	}
 //	printf("origin size %d  dciamate to %d\n", p_queue.size(), node.target);
@@ -486,23 +529,69 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
  		unsigned int decimate_num = p_queue.size() -  node.target ;
 		for(unsigned int i =0;i<decimate_num ;i++)
 		{
-			struct_pt pt_delete = p_queue.top();
-			pt_vecs[pt_delete.x][pt_delete.y] = false;
+			const struct_pt pt_delete = p_queue.top();
+			std::vector<struct_pt_link>& pt_vec=pt_vecs[pt_delete.x];
+\
+			pt_vec[pt_delete.y].exist = false;
+	//		printf("1---x= %d, y = %d, error = %lf\n", pt_delete.x, pt_delete.y, pt_delete.error);
+
+
+			int prev = pt_vec[pt_delete.y].prev;
+			int next = pt_vec[pt_delete.y].next;
 			p_queue.pop();
+		
+			//to recompute error
+
+			if(pt_vec[prev].prev == next ) 
+			{
+				//if only two left, all erase
+				p_queue.erase(pt_vec[prev].self);
+				p_queue.erase(pt_vec[next].self);
+				i +=2;
+			}
+			else
+			{
+		//		printf("2.2\n");
+				struct_pt struct_pt_prev, struct_pt_next;
+				struct_pt_prev.x = pt_delete.x;
+				struct_pt_prev.y = prev;
+				struct_pt_prev.error = computerError(pt_vec[prev].pt, pt_vec[pt_vec[prev].prev].pt, pt_vec[pt_vec[prev].next].pt);
+	//			printf("2.2.1---x= %d, y = %d, error = %lf\n", struct_pt_prev.x, struct_pt_prev.y, struct_pt_prev.error);
+
+
+				struct_pt_next.x = pt_delete.x;
+				struct_pt_next.y = next;
+				struct_pt_next.error = computerError(pt_vec[next].pt, pt_vec[pt_vec[next].prev].pt, pt_vec[pt_vec[next].next].pt);
+	//			printf("2.2.2---x= %d, y = %d, error = %lf\n", struct_pt_next.x, struct_pt_next.y, struct_pt_next.error);
+
+				p_queue.update(pt_vec[prev].self, struct_pt_prev);
+				p_queue.update(pt_vec[next].self, struct_pt_next);
+
+				pt_vec[next].prev = prev;
+				pt_vec[prev].next = next;
+
+
+
+			}
+			
+
 		}
 	}
 //	printf("remain size %d\n", p_queue.size());
 	
+	std::vector<const Polygon2d*> new_polygons;
+
 	Polygon2d  new_poly;
 	int cc = 0;
 	for (unsigned int o_idx = 0;o_idx < pt_vecs.size();o_idx++) {
 		
-		std::vector<bool> &pt_vec = pt_vecs[o_idx];
+		std::vector<struct_pt_link> &pt_vec = pt_vecs[o_idx];
 		
 		const Outline2d &o = poly.outlines()[o_idx];
 		Outline2d new_outline;
+		new_outline.positive = o.positive;
 		for (unsigned int v_idx = 0;v_idx < pt_vec.size();v_idx++) {
-			if(pt_vec[v_idx])
+			if(pt_vec[v_idx].exist)
 			{
 				new_outline.vertices.push_back(o.vertices[v_idx]);
 			}
@@ -514,15 +603,17 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 	}
 	
 //	printf("remain size after %d\n", cc);
-	
+	new_polygons.push_back(&new_poly);
+	return ClipperUtils::apply(new_polygons, ClipperLib::ctUnion);
 
-	ClipperLib::Clipper clipper;
+
+/*	ClipperLib::Clipper clipper;
 	clipper.AddPaths(ClipperUtils::fromPolygon2d(new_poly), ClipperLib::ptSubject, true);
 	ClipperLib::PolyTree result;
 	clipper.Execute(ClipperLib::ctUnion, result, ClipperLib::pftPositive);
-
-	return ClipperUtils::toPolygon2d(result);
 	
+	return ClipperUtils::toPolygon2d(result);
+*/	
 	
 
 	
@@ -557,6 +648,79 @@ Response GeometryEvaluator::visit(State &state, const DecimationNode &node)
 	}
 	return ContinueTraversal;
 }
+
+
+Response GeometryEvaluator::visit(State &state, const AlignNode &node)
+{
+	if (state.isPrefix() && isSmartCached(node)) return PruneTraversal;
+	if (state.isPostfix()) {
+		shared_ptr<const Geometry> geom;
+		if (!isSmartCached(node)) {
+			ResultObject res = applyToChildren(node, OPENSCAD_UNION);
+				if ((geom = res.constptr())) {
+					if (geom->getDimension() == 2) {
+						/*
+						shared_ptr<const Polygon2d> polygons = dynamic_pointer_cast<const Polygon2d>(geom);
+						assert(polygons);
+						
+						// If we got a const object, make a copy
+						shared_ptr<Polygon2d> newpoly;
+						if (res.isConst()) newpoly.reset(new Polygon2d(*polygons));
+						else newpoly = dynamic_pointer_cast<Polygon2d>(res.ptr());
+						
+						Transform2d mat2;
+						mat2.matrix() << 
+							node.matrix(0,0), node.matrix(0,1), node.matrix(0,3),
+							node.matrix(1,0), node.matrix(1,1), node.matrix(1,3),
+							node.matrix(3,0), node.matrix(3,1), node.matrix(3,3);
+						newpoly->transform(mat2);
+						// A 2D transformation may flip the winding order of a polygon.
+						// If that happens with a sanitized polygon, we need to reverse
+						// the winding order for it to be correct.
+						if (newpoly->isSanitized() && mat2.matrix().determinant() <= 0) {
+							geom.reset(ClipperUtils::sanitize(*newpoly));
+						}
+						*/
+					}
+					else if (geom->getDimension() == 3) {
+						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
+						if (ps) {
+							// If we got a const object, make a copy
+							shared_ptr<PolySet> newps;
+							if (res.isConst()) newps.reset(new PolySet(*ps));
+							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
+							
+							newps->getBoundingBox();
+							Transform3d  _matrix;
+							newps ->transform(_matrix);
+							geom = newps;
+						}
+						else {
+							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
+							assert(N);
+							// If we got a const object, make a copy
+							shared_ptr<CGAL_Nef_polyhedron> newN;
+							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
+							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
+							
+							newN->getBoundingBox();
+							Transform3d _matrix;
+							newN->transform(_matrix);
+							geom = newN;
+						}
+					}
+				}
+		}
+		else {
+			geom = smartCacheGet(node, false);
+		}
+		addToParent(state, node, geom);
+	}
+	return ContinueTraversal;
+}
+
+
+
 
 //add by zwbrush end
 
@@ -797,18 +961,25 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							shared_ptr<PolySet> newps_subdivided;
 							
 							newps_subdivided.reset( new PolySet(3));
-							
-							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, ((PolarizationNode*)&node)->max_edge_lendgth, PolysetUtils::subdivide_axis_x);
- 							
- 							//newps->transform(node.matrix);
-							//TEST: 获取包围盒数据
-							//BoundingBox bbox = newps->getBoundingBox();
-							//printf("node mesh BBox:[%f, %f, %f] [%f, %f, %f]\n  size:[%f, %f, %f] \n", bbox.min()[0], bbox.min()[1], bbox.min()[2], bbox.max()[0], bbox.max()[1], bbox.max()[2],
-							//	bbox.max()[0] - bbox.min()[0], bbox.max()[1] - bbox.min()[1], bbox.max()[2] - bbox.min()[2]);
+							double max_edge_lendgth = -1.0;
 
-							//注意：强制把极化周长设置为node模型的周长
-							BoundingBox bbox = newps_subdivided->getBoundingBox();
+							BoundingBox bbox = newps->getBoundingBox();
 							double o_size = bbox.max()[0] - bbox.min()[0];
+
+							
+							
+							if(node.fn > 0.0)
+								max_edge_lendgth =  o_size  / node.fn;
+							else if(node.fa > 0.0)
+								max_edge_lendgth =  o_size * node.fa / node.angle;
+							else 
+								max_edge_lendgth =  node.fs;
+
+							//printf("%lf , %lf, %lf, %lf, max_edge_lendgth %lf\n", o_size,node.fn,node.fa,  node.fs, max_edge_lendgth);
+							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, max_edge_lendgth, PolysetUtils::subdivide_axis_x);
+ 														//注意：强制把极化周长设置为node模型的周长
+							//BoundingBox bbox = newps_subdivided->getBoundingBox();
+							//double o_size = bbox.max()[0] - bbox.min()[0];
 							newps_subdivided->polarization(o_size, node.angle);
  							geom = newps_subdivided; 
 					}

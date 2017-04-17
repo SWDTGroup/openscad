@@ -41,3 +41,5 @@ int Calc::get_fragments_from_r(double r, double fn, double fs, double fa)
 	return (int)ceil(fmax(fmin(360.0 / fa, r*2*M_PI / fs), 5));
 }
 
+
+

@@ -53,17 +53,11 @@ public:
 AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleInstantiation *inst, EvalContext *evalctx) const
 {
 	PolarizationNode *node = new PolarizationNode(inst);
-
-	node->max_edge_lendgth = 1.0;
-	
-	node->angle = 360;
-	
 	AssignmentList args;
 
 	switch (this->type) {
 	case polarization_normal:
-		args += Assignment("angle"), Assignment("max_edge_lendgth");
-;
+		args += Assignment("angle");
 		break;
 	default:
 		assert(false);
@@ -82,11 +76,10 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 		}
 
 
-		ValuePtr max_edge_lendgth = c.lookup_variable("max_edge_lendgth");
-		if (max_edge_lendgth->type() == Value::NUMBER)
-		{
-			node->max_edge_lendgth = max_edge_lendgth->toDouble();
-		}
+		node->fn = c.lookup_variable("$fn")->toDouble();
+		node->fs = c.lookup_variable("$fs")->toDouble();
+		node->fa = c.lookup_variable("$fa")->toDouble();
+
 
 	}
 
@@ -100,7 +93,9 @@ std::string PolarizationNode::toString() const
 {
 	std::stringstream stream;
 
-	stream << "polarization(" << angle << ", " <<  max_edge_lendgth <<")";
+	stream << "polarization(angle = " << angle << ", " ;
+	stream  <<  "$fn = " << this->fn << ", $fa = " << this->fa << ", $fs = " << this->fs << ")";
+
 	return stream.str();
 }
 

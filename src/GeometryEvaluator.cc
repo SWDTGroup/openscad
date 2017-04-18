@@ -579,7 +579,7 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 	}
 //	printf("remain size %d\n", p_queue.size());
 	
-	std::vector<const Polygon2d*> new_polygons;
+//	std::vector<const Polygon2d*> new_polygons;
 
 	Polygon2d  new_poly;
 	int cc = 0;
@@ -601,19 +601,25 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 		cc += new_outline.vertices.size();
 		new_poly.addOutline(new_outline);
 	}
+	new_poly.setSanitized(true);
+	
 	
 //	printf("remain size after %d\n", cc);
-	new_polygons.push_back(&new_poly);
-	return ClipperUtils::apply(new_polygons, ClipperLib::ctUnion);
 
+//	new_polygons.push_back(&new_poly);
+//	return ClipperUtils::apply(new_polygons, ClipperLib::ctUnion);
 
-/*	ClipperLib::Clipper clipper;
-	clipper.AddPaths(ClipperUtils::fromPolygon2d(new_poly), ClipperLib::ptSubject, true);
+	
+
+	ClipperLib::Clipper clipper;
+	ClipperLib::Paths _paths = ClipperUtils::fromPolygon2d(new_poly);
+	ClipperLib::CleanPolygons(_paths);
+	clipper.AddPaths(_paths, ClipperLib::ptSubject, true);
 	ClipperLib::PolyTree result;
 	clipper.Execute(ClipperLib::ctUnion, result, ClipperLib::pftPositive);
 	
 	return ClipperUtils::toPolygon2d(result);
-*/	
+	
 	
 
 	

@@ -83,7 +83,6 @@ static CGAL_Nef_polyhedron *createNefPolyhedronFromPolySet(const PolySet &ps)
 		 	PRINTDB("Polyhedron is closed: %d", P.is_closed());
 		 	PRINTDB("Polyhedron is valid: %d", P.is_valid(false, 0));
 		 }
-
 		if (!err) N = new CGAL_Nef_polyhedron3(P);
 	}
 	catch (const CGAL::Assertion_exception &e) {
@@ -360,7 +359,7 @@ namespace CGALUtils {
 
 						CGAL::Polyhedron_3<Hull_kernel> result;
 						t.stop();
-						PRINTDB("Minkowski: Point cloud creation (%d â¨‰ %d -> %d) took %f ms", points[0].size() % points[1].size() % minkowski_points.size() % (t.time()*1000));
+						PRINTDB("Minkowski: Point cloud creation (%d â¨?%d -> %d) took %f ms", points[0].size() % points[1].size() % minkowski_points.size() % (t.time()*1000));
 						t.reset();
 
 						t.start();

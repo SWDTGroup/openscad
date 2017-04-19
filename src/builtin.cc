@@ -68,7 +68,8 @@ void Builtins::initialize()
 	register_builtin_csgops();
 	register_builtin_transform();
 	register_builtin_polarization();//add by Look
-	register_builtin_decimation(); //add by zwbrush
+	register_builtin_decimation(); 
+	register_builtin_align();//add by zwbrush
 	register_builtin_color();
 	register_builtin_primitives();
 	register_builtin_surface();

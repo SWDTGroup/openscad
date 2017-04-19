@@ -298,6 +298,7 @@ HEADERS += src/typedefs.h \
            src/transformnode.h \
            src/polarizationNode.h \
            src/decimationNode.h \
+           src/alignNode.h \
            src/colornode.h \
            src/rendernode.h \
            src/textnode.h \
@@ -366,7 +367,7 @@ SOURCES += \
            src/libsvg/shape.cc \
            src/libsvg/transformation.cc \
            src/libsvg/util.cc \
-	    src/import_svg.cc \
+	   src/import_svg.cc \
            \
 	   src/version_check.cc \
            src/ProgressWidget.cc \
@@ -397,6 +398,7 @@ SOURCES += \
            src/transform.cc \
            src/polarization.cc \
            src/decimation.cc \
+           src/align.cc \
            src/color.cc \
            src/primitives.cc \
            src/projection.cc \

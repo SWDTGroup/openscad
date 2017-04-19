@@ -145,10 +145,10 @@ void export_stl(const PolySet &ps, std::ostream &output)
 		output.write((const char*)&temp,4) ; \
 	} 
 	
-	char szHeader[80]  = "solid OpenSCAD_Model";
+	char szHeader[80]  = "solid OpenSCAD_Model Binary";
 	output.write((const char*)szHeader, 80);
 	
-	unsigned int poly_size = (unsigned int)triangulated.polygons.size();
+	unsigned long poly_size = (unsigned long)triangulated.polygons.size();
 	output.write((const char*)&poly_size,4) ;
 	BOOST_FOREACH(const Polygon &p, triangulated.polygons) {
 		assert(p.size() == 3); // STL only allows triangles

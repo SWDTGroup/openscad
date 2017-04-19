@@ -656,6 +656,24 @@ Response GeometryEvaluator::visit(State &state, const DecimationNode &node)
 }
 
 
+static Transform3d getAlignMartix(BoundingBox& bbox, const Vector3d& plane)
+{
+	Transform3d	_matrix = Transform3d::Identity();
+	Vector3d translatevec(0,0,0);
+
+	if(plane.x()!=0)
+		translatevec[0]= plane.x() > 0 ? -1 * bbox.min().x() : -1 * bbox.max().x();
+	else if(plane.y()!=0)
+		translatevec[1]= plane.y() > 0 ? -1 * bbox.min().y() : -1 * bbox.max().y();
+	else if(plane.z()!=0)
+		translatevec[2]= plane.z() > 0 ? -1 * bbox.min().z() : -1 * bbox.max().z();
+	
+	_matrix.translate(translatevec);
+
+	
+	return _matrix;
+} 
+
 Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 {
 	if (state.isPrefix() && isSmartCached(node)) return PruneTraversal;
@@ -696,8 +714,9 @@ Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 							if (res.isConst()) newps.reset(new PolySet(*ps));
 							else newps = dynamic_pointer_cast<PolySet>(res.ptr());
 							
-							newps->getBoundingBox();
-							Transform3d  _matrix;
+							BoundingBox bbox= newps->getBoundingBox();
+							Transform3d _matrix = getAlignMartix(bbox, node.m_plane);
+
 							newps ->transform(_matrix);
 							geom = newps;
 						}
@@ -709,8 +728,8 @@ Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 							if (res.isConst()) newN.reset((CGAL_Nef_polyhedron*)N->copy());
 							else newN = dynamic_pointer_cast<CGAL_Nef_polyhedron>(res.ptr());
 							
-							newN->getBoundingBox();
-							Transform3d _matrix;
+							BoundingBox bbox = newN->getBoundingBox();
+							Transform3d _matrix = getAlignMartix(bbox, node.m_plane);
 							newN->transform(_matrix);
 							geom = newN;
 						}

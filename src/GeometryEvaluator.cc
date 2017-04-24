@@ -325,7 +325,7 @@ Geometry::ChildList GeometryEvaluator::collectChildren3D(const AbstractNode &nod
 Polygon2d *GeometryEvaluator::applyToChildren2D(const AbstractNode &node, OpenSCADOperator op)
 {
 	//add by zwbrush
-	if (op == OPENSCAD_OUTTER_JOIN) {
+	if (op == OPENSCAD_OUTLINE) {
 		return applyOutline2D(node);
 	}
 	//end of add by zwbrush
@@ -674,23 +674,31 @@ Response GeometryEvaluator::visit(State &state, const DecimationNode &node)
 }
 
 
-static Transform3d getAlignMartix(BoundingBox& bbox, const Vector3d& plane)
+Transform3d GeometryEvaluator::getAlignMartix(const BoundingBox& bbox, const Vector3d& plane)
 {
 	Transform3d	_matrix = Transform3d::Identity();
 	Vector3d translatevec(0,0,0);
-
-	if(plane.x()!=0)
-		translatevec[0]= plane.x() > 0 ? -1 * bbox.min().x() : -1 * bbox.max().x();
-	else if(plane.y()!=0)
-		translatevec[1]= plane.y() > 0 ? -1 * bbox.min().y() : -1 * bbox.max().y();
-	else if(plane.z()!=0)
-		translatevec[2]= plane.z() > 0 ? -1 * bbox.min().z() : -1 * bbox.max().z();
+	if(plane==Vector3d(0,0,0)) //center
+	{
+		translatevec = bbox.center() * -1 ;
+	}	
+	else 
+	{
+		if(plane.x()!=0)
+			translatevec[0]= plane.x() > 0 ? -1 * bbox.min().x() : -1 * bbox.max().x();
+		if(plane.y()!=0)
+			translatevec[1]= plane.y() > 0 ? -1 * bbox.min().y() : -1 * bbox.max().y();
+		if(plane.z()!=0)
+			translatevec[2]= plane.z() > 0 ? -1 * bbox.min().z() : -1 * bbox.max().z();
+	}
 	
 	_matrix.translate(translatevec);
 
 	
 	return _matrix;
 } 
+
+
 
 Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 {
@@ -701,7 +709,7 @@ Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 			ResultObject res = applyToChildren(node, OPENSCAD_UNION);
 				if ((geom = res.constptr())) {
 					if (geom->getDimension() == 2) {
-						/*
+						
 						shared_ptr<const Polygon2d> polygons = dynamic_pointer_cast<const Polygon2d>(geom);
 						assert(polygons);
 						
@@ -710,19 +718,19 @@ Response GeometryEvaluator::visit(State &state, const AlignNode &node)
 						if (res.isConst()) newpoly.reset(new Polygon2d(*polygons));
 						else newpoly = dynamic_pointer_cast<Polygon2d>(res.ptr());
 						
+						BoundingBox bbox= newpoly->getBoundingBox();
+						Transform3d _matrix = getAlignMartix(bbox, node.m_plane);
+
 						Transform2d mat2;
 						mat2.matrix() << 
-							node.matrix(0,0), node.matrix(0,1), node.matrix(0,3),
-							node.matrix(1,0), node.matrix(1,1), node.matrix(1,3),
-							node.matrix(3,0), node.matrix(3,1), node.matrix(3,3);
+							_matrix(0,0), _matrix(0,1), _matrix(0,3),
+							_matrix(1,0), _matrix(1,1), _matrix(1,3),
+							_matrix(3,0), _matrix(3,1), _matrix(3,3);
 						newpoly->transform(mat2);
-						// A 2D transformation may flip the winding order of a polygon.
-						// If that happens with a sanitized polygon, we need to reverse
-						// the winding order for it to be correct.
-						if (newpoly->isSanitized() && mat2.matrix().determinant() <= 0) {
-							geom.reset(ClipperUtils::sanitize(*newpoly));
-						}
-						*/
+					
+						geom = newpoly;
+						
+						
 					}
 					else if (geom->getDimension() == 3) {
 						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
@@ -1431,9 +1439,9 @@ Response GeometryEvaluator::visit(State &state, const CgaladvNode &node)
 		if (!isSmartCached(node)) {
 			switch (node.type) {
 			//add by zwbrush
-			case OUTTER_JOIN:
+			case OUTLINE:
 			{
-				geom = applyToChildren(node, OPENSCAD_OUTTER_JOIN).constptr();
+				geom = applyToChildren(node, OPENSCAD_OUTLINE).constptr();
 				break;
 
 			}

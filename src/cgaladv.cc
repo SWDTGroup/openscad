@@ -122,8 +122,8 @@ AbstractNode *CgaladvModule::instantiate(const Context *ctx, const ModuleInstant
 std::string CgaladvNode::name() const
 {
 	switch (this->type) {
-	case OUTTER_JOIN:
-		return "outter_join";
+	case OUTLINE:
+		return "outline";
 		break;
 	case MINKOWSKI:
 		return "minkowski";
@@ -162,7 +162,7 @@ std::string CgaladvNode::toString() const
 		stream << "(level = " << this->level << ", convexity = " << this->convexity << ")";
 		break;
 	case HULL:
-	case  OUTTER_JOIN:
+	case  OUTLINE:
 		stream << "()";
 		break;
 	case RESIZE:
@@ -181,7 +181,7 @@ std::string CgaladvNode::toString() const
 
 void register_builtin_cgaladv()
 {
-	Builtins::init("outter_join", new CgaladvModule(OUTTER_JOIN));
+	Builtins::init("sz_outline_join", new CgaladvModule(OUTLINE));
 	Builtins::init("minkowski", new CgaladvModule(MINKOWSKI));
 	Builtins::init("glide", new CgaladvModule(GLIDE));
 	Builtins::init("subdiv", new CgaladvModule(SUBDIV));

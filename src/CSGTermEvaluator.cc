@@ -6,6 +6,9 @@
 #include "csgnode.h"
 #include "transformnode.h"
 #include "polarizationNode.h"//add by Look
+#include "alignNode.h" //add by zwbrush
+#include "CGAL_Nef_polyhedron.h" //add by zwbrush
+
 #include "colornode.h"
 #include "rendernode.h"
 #include "cgaladvnode.h"
@@ -201,6 +204,56 @@ Response CSGTermEvaluator::visit(State &state, const PolarizationNode &node)
 	return ContinueTraversal;
 }
 //add by Look end
+
+Response CSGTermEvaluator::visit(State &state, const AlignNode &node)
+{
+	if (state.isPrefix()) 
+	{
+		shared_ptr<CSGTerm> t1;
+		if (this->geomevaluator) 
+		{
+					shared_ptr<const Geometry> geom = this->geomevaluator->evaluateGeometry((const AbstractNode&)node, false);
+					if (geom->getDimension() == 2) {
+						
+						shared_ptr<const Polygon2d> polygons = dynamic_pointer_cast<const Polygon2d>(geom);
+						assert(polygons);
+						
+						BoundingBox bbox= polygons->getBoundingBox();
+						Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
+			
+						state.setMatrix(state.matrix() * _matrix );			
+						
+					}
+					else if (geom->getDimension() == 3) {
+						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
+						if (ps) {
+							
+							BoundingBox bbox= ps->getBoundingBox();
+							Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
+
+							//PRINTB("pp prexxx %lf", _matrix[]);
+							state.setMatrix( _matrix  * state.matrix() * _matrix);	
+
+						}
+						else {
+							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
+							assert(N);
+								
+							BoundingBox bbox = N->getBoundingBox();
+							Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
+			
+							state.setMatrix(state.matrix() * _matrix);
+						}
+					}
+		}
+	}
+	if (state.isPostfix()) {
+		applyToChildren(node, CSGT_UNION);
+		addToParent(state, node);
+	}
+	return ContinueTraversal;
+}
+
 
 Response CSGTermEvaluator::visit(State &state, const ColorNode &node)
 {

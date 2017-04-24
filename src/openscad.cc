@@ -282,7 +282,7 @@ Camera get_camera(po::variables_map vm)
 #include <QSettings>
 #endif
 static bool checkAndExport(shared_ptr<const Geometry> root_geom, unsigned nd,
-	enum FileFormat format, const char *filename)
+	enum FileFormat format, const char *filename, Context * context=NULL)
 {
 	if (root_geom->getDimension() != nd) {
 		PRINTB("Current top level object is not a %dD object.", nd);
@@ -292,7 +292,7 @@ static bool checkAndExport(shared_ptr<const Geometry> root_geom, unsigned nd,
 		PRINT("Current top level object is empty.");
 		return false;
 	}
-	exportFileByName(root_geom.get(), format, filename, filename);
+	exportFileByName(root_geom.get(), format, filename, filename, context);
 	return true;
 }
 
@@ -531,7 +531,7 @@ int cmdline(const char *deps_output_file, const std::string &filename, Camera &c
 		}
 		
 		if (svg_output_file) {
-			if (!checkAndExport(root_geom, 2, OPENSCAD_SVG, svg_output_file))
+			if (!checkAndExport(root_geom, 2, OPENSCAD_SVG, svg_output_file, &top_ctx))
 				return 1;
 		}
 

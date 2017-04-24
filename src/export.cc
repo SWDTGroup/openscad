@@ -578,6 +578,23 @@ void export_dxf(const Polygon2d &poly, std::ostream &output)
 void export_svg(const Polygon2d &poly, std::ostream &output , Context *context)
 {
 	setlocale(LC_NUMERIC, "C"); // Ensure radix is . (not ,) in output
+
+	bool has_area= false;
+	ValuePtr export_area = context->lookup_variable("$export_area", true);
+	Vector2d left_top, right_bottom;
+	if(export_area->isDefined() && export_area->type() == Value::VECTOR)
+	{
+		const Value::VectorType &vs = export_area->toVector();
+		if ( vs.size() == 4 ) 
+		{
+			left_top[0] = vs[0]->toDouble();
+			left_top[1] = vs[1]->toDouble();
+			right_bottom[0] = vs[2]->toDouble();
+			right_bottom[1] = vs[3]->toDouble();
+			has_area = true;
+		}
+	}
+
 	
 	BoundingBox bbox = poly.getBoundingBox();
 	int minx = floor(bbox.min().x());
@@ -587,6 +604,15 @@ void export_svg(const Polygon2d &poly, std::ostream &output , Context *context)
 
 	int width = maxx - minx;
 	int height = maxy - miny;
+
+	if(has_area) //recalculate
+	{
+		width = right_bottom[0]- left_top[0];
+		height = left_top[1] - right_bottom[1];
+		minx = 0; maxx = width;
+		miny  = 0;maxy  = height;
+	}
+
 	output
 		<< "<?xml version=\"1.0\" standalone=\"no\"?>\n"
 		<< "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
@@ -602,10 +628,13 @@ void export_svg(const Polygon2d &poly, std::ostream &output , Context *context)
 		}
 		
 		const Eigen::Vector2d& p0 = o.vertices[0];
-		output << "M " << p0.x() << "," << -p0.y();
+		double y0 = has_area ? left_top[1]-p0.y() : -p0.y();
+		output << "M " << p0.x() << "," << y0 ;
 		for (unsigned int idx = 1;idx < o.vertices.size();idx++) {
 			const Eigen::Vector2d& p = o.vertices[idx];
-			output << " L " << p.x() << "," << -p.y();
+			double x =  has_area ?  p.x() - left_top[0]  : p.x();
+			double y = has_area ? left_top[1]-p.y() : -p.y();
+			output << " L " << x << "," << y;
 			if ((idx % 6) == 5) {
 				output << "\n";
 			}

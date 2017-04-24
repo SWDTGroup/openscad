@@ -367,13 +367,11 @@ namespace ClipperUtils {
 	{
 		//if (polygons.size() == 1) return new Polygon2d(*polygons[0]); // Just copy
 
-
-	
 		ClipperLib::Paths _paths = ClipperUtils::fromPolygon2d(*polygons[0]);
 			
 		ClipperLib::Paths outter_paths;
 		ClipperLib::Paths _outlines;
-		//ClipperLib::Paths inner_paths;
+		ClipperLib::Paths other_paths;
 		std::vector<std::pair<int, double> > outter_path_areas;
 	
 
@@ -383,6 +381,8 @@ namespace ClipperUtils {
 				outter_paths.push_back(_path);
 				outter_path_areas.push_back(std::make_pair(outter_path_areas.size(),ClipperLib::Area(_path)));
 			}
+			else
+				other_paths.push_back(_path);
 		}
 
 		std::sort(outter_path_areas.begin(),outter_path_areas.end(),  outter_area_less_cmp);
@@ -405,13 +405,37 @@ namespace ClipperUtils {
 			}
 			if(outter_path_areas[outter_index].second>0)
 				_outlines.push_back(_out_path);
+			else
+				other_paths.push_back(_out_path);
+
 		}
 
-
-		return toPolygon2d(sanitize((const ClipperLib::Paths&)_outlines));
-
+		
 			
-					
+		std::vector<ClipperLib::Paths> pathsvector;
+		pathsvector.push_back(_outlines);
+
+		for (size_t i=1; i<polygons.size(); i++) {
+			ClipperLib::Paths join_paths = ClipperUtils::fromPolygon2d(*polygons[i]);
+			pathsvector.push_back(join_paths);
+		}
+
+		Polygon2d * outline_join1 = apply(pathsvector,  ClipperLib::ctUnion);
+
+		if (polygons.size() == 1) 
+		{
+			return outline_join1;  // Just get outline 
+		}
+
+		pathsvector.clear();
+		pathsvector.push_back(ClipperUtils::fromPolygon2d(*outline_join1));
+		delete outline_join1;
+		
+		ClipperLib::ReversePaths(other_paths);
+		pathsvector.push_back(other_paths);
+		
+		return apply(pathsvector,  ClipperLib::ctDifference);
+						
 	}
 
 };

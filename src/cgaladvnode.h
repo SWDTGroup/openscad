@@ -11,7 +11,7 @@ enum cgaladv_type_e {
 	SUBDIV,
 	HULL,
 	RESIZE,
-	OUTTER_JOIN
+	OUTLINE
 };
 
 class CgaladvNode : public AbstractNode

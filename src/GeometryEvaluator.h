@@ -17,6 +17,7 @@ public:
 	virtual ~GeometryEvaluator() {}
 
 	shared_ptr<const Geometry> evaluateGeometry(const AbstractNode &node, bool allownef);
+	static Transform3d getAlignMartix(const BoundingBox& bbox, const Vector3d& plane);
 
 	virtual Response visit(State &state, const AbstractNode &node);
 	virtual Response visit(State &state, const AbstractIntersectionNode &node);

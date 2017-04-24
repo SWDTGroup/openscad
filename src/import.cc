@@ -139,8 +139,7 @@ AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstanti
 	ValuePtr keep_position = c.lookup_variable("keep_position", true);
 	if (!keep_position->isUndefined()) 
 		node->keep_position = keep_position->toBool();
-
-
+	
 	if (node->scale <= 0) node->scale = 1;
 
 	return node;

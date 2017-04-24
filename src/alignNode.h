@@ -5,10 +5,10 @@
 #include "visitor.h"
 #include <string>
 
-class AlignNode : public AbstractPolyNode
+class AlignNode : public AbstractNode
 {
 public:
-	AlignNode(const ModuleInstantiation *mi) : AbstractPolyNode(mi) {
+	AlignNode(const ModuleInstantiation *mi) : AbstractNode(mi) {
 		m_plane = Vector3d(0,0,1);
 	}
   virtual Response accept(class State &state, Visitor &visitor) const {

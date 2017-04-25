@@ -3,7 +3,7 @@
 #include "libsvg/libsvg.h"
 #include "clipper-utils.h"
 
-Polygon2d *import_svg(const std::string &filename)
+Polygon2d *import_svg(const std::string &filename, bool keep_position)
 {
 	libsvg::shapes_list_t *shapes = libsvg::libsvg_read_file(filename.c_str());
 	double x_min = 1.0/0.0;
@@ -47,8 +47,9 @@ Polygon2d *import_svg(const std::string &filename)
 			Outline2d outline;
 			for (libsvg::path_t::iterator it2 = p.begin();it2 != p.end();it2++) {
 				Eigen::Vector3d& v = *it2;
-				double x = v.x() - cx;
-				double y = -v.y() + cy;
+				double x = keep_position ? v.x() : v.x() - cx;
+				double y = keep_position ? -v.y() : -v.y() + cy;
+
 				outline.vertices.push_back(Vector2d(x, y));
 				outline.positive=true;
 			}

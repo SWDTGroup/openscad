@@ -15,7 +15,7 @@ enum import_type_e {
 class ImportNode : public LeafNode
 {
 public:
-	ImportNode(const ModuleInstantiation *mi, import_type_e type) : LeafNode(mi), type(type) { }
+	ImportNode(const ModuleInstantiation *mi, import_type_e type) : LeafNode(mi), type(type), keep_position(false) { }
   virtual Response accept(class State &state, Visitor &visitor) const {
 		return visitor.visit(state, *this);
 	}
@@ -28,5 +28,6 @@ public:
 	int convexity;
 	double fn, fs, fa;
 	double origin_x, origin_y, scale;
+	bool keep_position;
 	virtual class Geometry *createGeometry() const;
 };

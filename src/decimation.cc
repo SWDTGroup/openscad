@@ -54,6 +54,8 @@ AbstractNode *DecimationModule::instantiate(const Context *ctx, const ModuleInst
 	DecimationNode *node = new DecimationNode(inst);
 
 	AssignmentList args;
+	args += Assignment("type");
+
 	args += Assignment("target");
 
 	Context c(ctx);
@@ -67,7 +69,12 @@ AbstractNode *DecimationModule::instantiate(const Context *ctx, const ModuleInst
 	if (target->isDefinedAs(Value::NUMBER)) {
 	    node->target = (unsigned int)target->toDouble();
 	} 
-	
+
+	const ValuePtr keep_main= c.lookup_variable("keep_main", true);
+
+	if (keep_main->isDefinedAs(Value::BOOL)) {
+	    node->keep_main= keep_main->toBool();
+	 } 
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);
 	node->children.insert(node->children.end(), instantiatednodes.begin(), instantiatednodes.end());
 
@@ -78,12 +85,12 @@ std::string DecimationNode::toString() const
 {
 	std::stringstream stream;
 
-	stream  << this->name() << "(target = " << target <<  " )";
+	stream  << this->name() << "(keep_main = " << keep_main << ",target = " << target <<  " )";
 
 	return stream.str();
 }
 
 void register_builtin_decimation()
 {
-	Builtins::init("decimate", new DecimationModule());
+	Builtins::init("sz_decimate", new DecimationModule());
 }

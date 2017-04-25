@@ -61,5 +61,5 @@ std::string AlignNode::toString() const
 
 void register_builtin_align()
 {
-	Builtins::init("align", new AlignModule());
+	Builtins::init("sz_align", new AlignModule());
 }

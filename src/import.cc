@@ -56,7 +56,7 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 #include <boost/detail/endian.hpp>
 #include <boost/cstdint.hpp>
 
-extern Polygon2d *import_svg(const std::string &filename);
+extern Polygon2d *import_svg(const std::string &filename, bool keep_position);
 
 class ImportModule : public AbstractModule
 {
@@ -69,7 +69,7 @@ public:
 AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstantiation *inst, EvalContext *evalctx) const
 {
 	AssignmentList args;
-	args += Assignment("file"), Assignment("layer"), Assignment("convexity"), Assignment("origin"), Assignment("scale");
+	args += Assignment("file"), Assignment("layer"), Assignment("convexity"), Assignment("origin"), Assignment("scale"), Assignment("keep_position") ;
 	args += Assignment("filename"), Assignment("layername");
 
   // FIXME: This is broken. Tag as deprecated and fix
@@ -135,6 +135,11 @@ AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstanti
 	origin->getVec2(node->origin_x, node->origin_y);
 
 	node->scale = c.lookup_variable("scale", true)->toDouble();
+	
+	ValuePtr keep_position = c.lookup_variable("keep_position", true);
+	if (!keep_position->isUndefined()) 
+		node->keep_position = keep_position->toBool();
+
 
 	if (node->scale <= 0) node->scale = 1;
 
@@ -303,7 +308,7 @@ Geometry *ImportNode::createGeometry() const
 		break;
 
 	case TYPE_SVG: {
-		g = import_svg(this->filename);
+		g = import_svg(this->filename, this->keep_position);
  		break;
 	}
 	default:

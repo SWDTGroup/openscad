@@ -8,12 +8,14 @@
 class DecimationNode : public AbstractPolyNode
 {
 public:
-	DecimationNode(const ModuleInstantiation *mi) : AbstractPolyNode(mi), target(0) { }
+	enum DecimationOp {DecimationOp_normal, DecimationOp_keepmain};
+   	unsigned int target;
+	bool keep_main;
+
+	DecimationNode(const ModuleInstantiation *mi) : AbstractPolyNode(mi), target(0) , keep_main(false){ }
         virtual Response accept(class State &state, Visitor &visitor) const {
 		return visitor.visit(state, *this);
 	}
 	virtual std::string toString() const;
 	virtual std::string name() const { return "decimate"; }
-
-    unsigned int target;
 };

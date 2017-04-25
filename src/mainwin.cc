@@ -2205,7 +2205,7 @@ void MainWindow::actionExportSVG()
 		return;
 	}
 	exportFileByName(this->root_geom.get(), OPENSCAD_SVG, svg_filename.toUtf8(),
-		svg_filename.toLocal8Bit().constData());
+		svg_filename.toLocal8Bit().constData(), &top_ctx);
 	PRINT("SVG export finished.");
 
 	clearCurrentOutput();

@@ -263,4 +263,97 @@ namespace ClipperUtils {
 		co.Execute(result, offset * CLIPPER_SCALE);
 		return toPolygon2d(result);
 	}
+
+	
+	Polygon2d* findLargest(const Polygon2d &polygon)
+	{
+		
+			
+			ClipperLib::Paths _paths = ClipperUtils::fromPolygon2d(polygon);
+			
+			ClipperLib::Paths outter_paths;
+			ClipperLib::Paths inner_paths;
+
+			BOOST_FOREACH(ClipperLib::Path const& _path, _paths) {
+				if(ClipperLib::Orientation(_path))
+					outter_paths.push_back(_path);
+				else
+					inner_paths.push_back(_path);
+			}
+			
+			std::vector<int> polygons_link[outter_paths.size()];
+			
+			//PRINTB("inner %d", inner_paths.size());
+
+			for(unsigned int inner_index = 0;inner_index<inner_paths.size();inner_index++)
+			{
+				ClipperLib::Path& inner_path = inner_paths[inner_index];
+				double min_outter_area = -1;
+				int   min_outter_index = -1;
+				for(unsigned int  outter_index =  0 ; outter_index< outter_paths.size();outter_index++) 
+				{
+					ClipperLib::Path& outter_path = outter_paths[outter_index]; 
+					if(ClipperLib::PointInPolygon(inner_path[0], outter_path)>0)
+					{
+						double area =  ClipperLib::Area(outter_path);
+						if(area  < min_outter_area || min_outter_area<0)
+						{
+							min_outter_area = area ;
+							min_outter_index = outter_index;
+						}
+					}	
+				}
+				assert(min_outter_index>=0);
+				polygons_link[min_outter_index].push_back(inner_index);
+			}
+			
+			
+			int largest_outter_index = -1;
+			//PRINTB("outter %d", outter_paths.size());
+
+			double large_area = 0;
+			for(unsigned int outter_index=0;outter_index<outter_paths.size();outter_index++)
+			{
+				double area = 0;
+				//PRINTB("outter idx %d", outter_index);
+
+
+				area += ClipperLib::Area(outter_paths[outter_index]);
+				//PRINTB("outter area %lf", area);
+
+			
+				for(unsigned int inner_index=0;inner_index<polygons_link[outter_index].size();inner_index++)
+				{	
+					//PRINTB("--inner idx %d", inner_index);
+					//PRINTB("--inner id %d ",polygons_link[outter_index][inner_index]);
+					double inner_area = ClipperLib::Area(inner_paths[polygons_link[outter_index][inner_index]]);
+					//PRINTB("inner area %lf", inner_area);
+
+					area += inner_area;
+				}
+				if(area > large_area)
+				{
+					large_area = area ;
+					largest_outter_index = outter_index;
+				}
+				
+
+			//	PRINTB("total Area %lf -- ",  area);
+
+					
+			}
+
+			
+			//PRINTB("largest_outter_index %d -- ",  largest_outter_index);
+
+			ClipperLib::Paths result_paths;
+			result_paths.push_back(outter_paths[largest_outter_index]);
+			for(unsigned int result_idx = 0;result_idx<polygons_link[largest_outter_index].size();result_idx++)
+				result_paths.push_back(inner_paths[polygons_link[largest_outter_index][result_idx]]);
+
+
+
+
+			return toPolygon2d(sanitize((const ClipperLib::Paths&)result_paths));
+	}
 };

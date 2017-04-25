@@ -106,5 +106,5 @@ std::string PolarizationNode::name() const
 
 void register_builtin_polarization()
 {
-	Builtins::init("polarization", new PolarizationModule(polarization_normal));
+	Builtins::init("sz_polarization", new PolarizationModule(polarization_normal));
 }

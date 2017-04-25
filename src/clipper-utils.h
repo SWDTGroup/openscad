@@ -18,4 +18,7 @@ namespace ClipperUtils {
 	Polygon2d *applyMinkowski(const std::vector<const Polygon2d*> &polygons);
 	Polygon2d *apply(const std::vector<const Polygon2d*> &polygons, ClipperLib::ClipType);
 	Polygon2d *apply(const std::vector<ClipperLib::Paths> &pathsvector, ClipperLib::ClipType);
+
+	Polygon2d* findLargest(const Polygon2d &poly);
+	
 };

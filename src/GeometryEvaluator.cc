@@ -469,8 +469,16 @@ static double computerError(Eigen::Vector2d pt, Eigen::Vector2d pt_prev, Eigen::
 	return priority_error;
 }
 
-static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d &poly)
+static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d &poly1)
 {
+	if(node.target==0)
+		return new Polygon2d(poly1);
+
+	const Polygon2d *p_poly = &poly1;
+
+	if(node.keep_main)
+		p_poly =  ClipperUtils::findLargest(poly1); 
+	const Polygon2d& poly = *p_poly;
 	pt_priority_queue p_queue;
 	std::vector<std::vector<struct_pt_link> > pt_vecs;
 	pt_vecs.reserve(poly.outlines().size());
@@ -481,7 +489,7 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 			pt_num += o.vertices.size();
 	}	
 	if(pt_num <= node.target)
-		return NULL;
+		return new Polygon2d(poly);
 
 	for (unsigned int o_idx = 0;o_idx < poly.outlines().size();o_idx++) {
 			
@@ -579,7 +587,6 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 	}
 //	printf("remain size %d\n", p_queue.size());
 	
-//	std::vector<const Polygon2d*> new_polygons;
 
 	Polygon2d  new_poly;
 	int cc = 0;
@@ -605,10 +612,6 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 	
 	
 //	printf("remain size after %d\n", cc);
-
-//	new_polygons.push_back(&new_poly);
-//	return ClipperUtils::apply(new_polygons, ClipperLib::ctUnion);
-
 	
 
 	ClipperLib::Clipper clipper;
@@ -637,14 +640,11 @@ Response GeometryEvaluator::visit(State &state, const DecimationNode &node)
 			const Geometry *geometry = applyToChildren2D(node, OPENSCAD_UNION);
 			if (geometry) {
 				const Polygon2d *polygon = dynamic_cast<const Polygon2d*>(geometry);
-				const Polygon2d *result = decimatePolygon2d(node, *polygon );
-				if(result ==NULL)
-					geom.reset(geometry);
-				else
-				{
-					geom.reset(result);
-					delete geometry;
-				}
+				Polygon2d *result = decimatePolygon2d(node, *polygon );
+				
+				geom.reset(result);
+				delete geometry;
+				
 			}
 		}
 		else {

@@ -52,7 +52,7 @@ struct triangle {
 #include <iostream>
 #define EXPORT_BINARY_STL
 
-void exportFile(const class Geometry *root_geom, std::ostream &output, FileFormat format)
+void exportFile(const class Geometry *root_geom, std::ostream &output, FileFormat format, Context *context)
 {
 	if (const CGAL_Nef_polyhedron *N = dynamic_cast<const CGAL_Nef_polyhedron *>(root_geom)) {
 
@@ -92,7 +92,7 @@ void exportFile(const class Geometry *root_geom, std::ostream &output, FileForma
 		else if (const Polygon2d *poly = dynamic_cast<const Polygon2d *>(root_geom)) {
 			switch (format) {
 			case OPENSCAD_SVG:
-				export_svg(*poly, output);
+				export_svg(*poly, output,context);
 				break;
 			case OPENSCAD_DXF:
 				export_dxf(*poly, output);
@@ -107,7 +107,7 @@ void exportFile(const class Geometry *root_geom, std::ostream &output, FileForma
 }
 
 void exportFileByName(const class Geometry *root_geom, FileFormat format,
-	const char *name2open, const char *name2display)
+	const char *name2open, const char *name2display, Context *context)
 {
 	 std::ios_base::openmode mode = std::fstream::out;
 #ifdef EXPORT_BINARY_STL
@@ -120,7 +120,7 @@ void exportFileByName(const class Geometry *root_geom, FileFormat format,
 		bool onerror = false;
 		fstream.exceptions(std::ios::badbit|std::ios::failbit);
 		try {
-			exportFile(root_geom, fstream, format);
+			exportFile(root_geom, fstream, format, context);
 		} catch (std::ios::failure x) {
 			onerror = true;
 		}
@@ -575,7 +575,7 @@ void export_dxf(const Polygon2d &poly, std::ostream &output)
 	setlocale(LC_NUMERIC, "");      // Set default locale
 }
 
-void export_svg(const Polygon2d &poly, std::ostream &output)
+void export_svg(const Polygon2d &poly, std::ostream &output , Context *context)
 {
 	setlocale(LC_NUMERIC, "C"); // Ensure radix is . (not ,) in output
 	

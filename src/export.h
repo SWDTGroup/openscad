@@ -4,6 +4,7 @@
 #include "Tree.h"
 #include "Camera.h"
 #include "memory.h"
+#include "context.h"
 
 #ifdef ENABLE_CGAL
 
@@ -15,9 +16,9 @@ enum FileFormat {
 	OPENSCAD_SVG
 };
 
-// void exportFile(const class Geometry *root_geom, std::ostream &output, FileFormat format);
+// void exportFile(const class Geometry *root_geom, std::ostream &output, FileFormat format, Context *context=NULL);
 void exportFileByName(const class Geometry *root_geom, FileFormat format,
-	const char *name2open, const char *name2display);
+	const char *name2open, const char *name2display, Context *context=NULL);
 void export_png(shared_ptr<const class Geometry> root_geom, Camera &c, std::ostream &output);
 
 void export_stl(const class CGAL_Nef_polyhedron *root_N, std::ostream &output);
@@ -27,7 +28,7 @@ void export_off(const class PolySet &ps, std::ostream &output);
 void export_amf(const class CGAL_Nef_polyhedron *root_N, std::ostream &output);
 void export_amf(const class PolySet &ps, std::ostream &output);
 void export_dxf(const class Polygon2d &poly, std::ostream &output);
-void export_svg(const class Polygon2d &poly, std::ostream &output);
+void export_svg(const class Polygon2d &poly, std::ostream &output,  Context *context=NULL);
 void export_png(const CGAL_Nef_polyhedron *root_N, Camera &c, std::ostream &output);
 void export_png_with_opencsg(Tree &tree, Camera &c, std::ostream &output);
 void export_png_with_throwntogether(Tree &tree, Camera &c, std::ostream &output);

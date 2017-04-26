@@ -61,6 +61,7 @@ private:
 	bool isSmartCached(const AbstractNode &node);
 	std::vector<const class Polygon2d *> collectChildren2D(const AbstractNode &node);
 	Geometry::ChildList collectChildren3D(const AbstractNode &node);
+	Polygon2d *applyOutline2D(const AbstractNode &node); //add by zwbrush
 	Polygon2d *applyMinkowski2D(const AbstractNode &node);
 	Polygon2d *applyHull2D(const AbstractNode &node);
 	Geometry *applyHull3D(const AbstractNode &node);

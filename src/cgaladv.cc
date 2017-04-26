@@ -47,7 +47,6 @@ AbstractNode *CgaladvModule::instantiate(const Context *ctx, const ModuleInstant
 	CgaladvNode *node = new CgaladvNode(inst, type);
 
 	AssignmentList args;
-
 	if (type == MINKOWSKI)
 		args += Assignment("convexity");
 
@@ -123,6 +122,9 @@ AbstractNode *CgaladvModule::instantiate(const Context *ctx, const ModuleInstant
 std::string CgaladvNode::name() const
 {
 	switch (this->type) {
+	case OUTTER_JOIN:
+		return "outter_join";
+		break;
 	case MINKOWSKI:
 		return "minkowski";
 		break;
@@ -160,6 +162,7 @@ std::string CgaladvNode::toString() const
 		stream << "(level = " << this->level << ", convexity = " << this->convexity << ")";
 		break;
 	case HULL:
+	case  OUTTER_JOIN:
 		stream << "()";
 		break;
 	case RESIZE:
@@ -178,6 +181,7 @@ std::string CgaladvNode::toString() const
 
 void register_builtin_cgaladv()
 {
+	Builtins::init("outter_join", new CgaladvModule(OUTTER_JOIN));
 	Builtins::init("minkowski", new CgaladvModule(MINKOWSKI));
 	Builtins::init("glide", new CgaladvModule(GLIDE));
 	Builtins::init("subdiv", new CgaladvModule(SUBDIV));

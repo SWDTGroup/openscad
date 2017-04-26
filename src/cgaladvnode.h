@@ -10,7 +10,8 @@ enum cgaladv_type_e {
 	GLIDE,
 	SUBDIV,
 	HULL,
-	RESIZE
+	RESIZE,
+	OUTTER_JOIN
 };
 
 class CgaladvNode : public AbstractNode

@@ -193,6 +193,18 @@ Geometry *GeometryEvaluator::applyHull3D(const AbstractNode &node)
 	return NULL;
 }
 
+//add by zwbrush
+Polygon2d *GeometryEvaluator::applyOutline2D(const AbstractNode &node)
+{
+	std::vector<const Polygon2d *> children = collectChildren2D(node);
+	if (!children.empty()) {
+		return ClipperUtils::applyOutline2D(children);
+	}
+	return NULL;
+}
+//end of add by zwbrush
+
+
 Polygon2d *GeometryEvaluator::applyMinkowski2D(const AbstractNode &node)
 {
 	std::vector<const Polygon2d *> children = collectChildren2D(node);
@@ -312,6 +324,12 @@ Geometry::ChildList GeometryEvaluator::collectChildren3D(const AbstractNode &nod
 */
 Polygon2d *GeometryEvaluator::applyToChildren2D(const AbstractNode &node, OpenSCADOperator op)
 {
+	//add by zwbrush
+	if (op == OPENSCAD_OUTTER_JOIN) {
+		return applyOutline2D(node);
+	}
+	//end of add by zwbrush
+
 	if (op == OPENSCAD_MINKOWSKI) {
 		return applyMinkowski2D(node);
 	}
@@ -1412,6 +1430,14 @@ Response GeometryEvaluator::visit(State &state, const CgaladvNode &node)
 		shared_ptr<const Geometry> geom;
 		if (!isSmartCached(node)) {
 			switch (node.type) {
+			//add by zwbrush
+			case OUTTER_JOIN:
+			{
+				geom = applyToChildren(node, OPENSCAD_OUTTER_JOIN).constptr();
+				break;
+
+			}
+			//end of add by zwbrush
 			case MINKOWSKI: {
 				ResultObject res = applyToChildren(node, OPENSCAD_MINKOWSKI);
 				geom = res.constptr();

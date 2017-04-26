@@ -356,4 +356,62 @@ namespace ClipperUtils {
 
 			return toPolygon2d(sanitize((const ClipperLib::Paths&)result_paths));
 	}
+
+
+	
+	static  bool outter_area_less_cmp(std::pair<int, double> & m1, std::pair<int, double> & m2) {
+	        return m1.second < m2.second;
+	}
+
+	Polygon2d *applyOutline2D(const std::vector<const Polygon2d*> &polygons)
+	{
+		//if (polygons.size() == 1) return new Polygon2d(*polygons[0]); // Just copy
+
+
+	
+		ClipperLib::Paths _paths = ClipperUtils::fromPolygon2d(*polygons[0]);
+			
+		ClipperLib::Paths outter_paths;
+		ClipperLib::Paths _outlines;
+		//ClipperLib::Paths inner_paths;
+		std::vector<std::pair<int, double> > outter_path_areas;
+	
+
+		BOOST_FOREACH(ClipperLib::Path const& _path, _paths) {
+			if(ClipperLib::Orientation(_path))
+			{
+				outter_paths.push_back(_path);
+				outter_path_areas.push_back(std::make_pair(outter_path_areas.size(),ClipperLib::Area(_path)));
+			}
+		}
+
+		std::sort(outter_path_areas.begin(),outter_path_areas.end(),  outter_area_less_cmp);
+			
+		for(unsigned int outter_index=0;outter_index<outter_path_areas.size();outter_index++)
+		{	
+			ClipperLib::Path _out_path = outter_paths[outter_path_areas[outter_index].first];
+			
+
+			for(unsigned int before_index=0;before_index<outter_index;before_index++)
+			{
+				if(outter_path_areas[before_index].second<0) //already mark deleted
+					continue;
+				ClipperLib::Path before_out_path = outter_paths[outter_path_areas[before_index].first];
+				if(ClipperLib::PointInPolygon(_out_path[0], before_out_path)>0)
+				{
+					outter_path_areas[outter_index].second = -1;	//mark deleted
+					break;
+				}
+			}
+			if(outter_path_areas[outter_index].second>0)
+				_outlines.push_back(_out_path);
+		}
+
+
+		return toPolygon2d(sanitize((const ClipperLib::Paths&)_outlines));
+
+			
+					
+	}
+
 };

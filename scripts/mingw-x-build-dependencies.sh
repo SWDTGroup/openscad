@@ -78,7 +78,7 @@ if [ "`echo $* | grep 64`" ]; then
  if [ "`echo $* | grep download`" ]; then
   PACKAGES='download-mpfr download-eigen download-opencsg download-cgal download-qtbase download-glib download-freetype download-fontconfig download-harfbuzz'
  else
-  PACKAGES='qtbase qscintilla2 mpfr eigen opencsg cgal glib freetype fontconfig harfbuzz'
+  PACKAGES='qtbase qscintilla2 mpfr eigen opencsg cgal glib freetype fontconfig harfbuzz libxml2'
  fi
 else
  MXE_TARGETS='i686-w64-mingw32.static'

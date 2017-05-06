@@ -193,67 +193,47 @@ Response CSGTermEvaluator::visit(State &state, const TransformNode &node)
 //TODO:
 Response CSGTermEvaluator::visit(State &state, const PolarizationNode &node)
 {
-	if (state.isPrefix()) {
-		//TODO: add
-		//state.setMatrix(state.matrix() * node.matrix);
-	}
 	if (state.isPostfix()) {
-		applyToChildren(node, CSGT_UNION);
+		shared_ptr<CSGTerm> t1;
+   		 // FIXME: Calling evaluator directly since we're not a PolyNode. Generalize this.
+		shared_ptr<const Geometry> geom;
+		if (this->geomevaluator) {
+			geom = this->geomevaluator->evaluateGeometry(node, false);
+			if (geom) {
+				t1 = evaluate_csg_term_from_geometry(state, this->highlights, this->background, 
+																						 geom, node.modinst, node);
+			}
+			node.progress_report();
+		}
+		this->stored_term[node.index()] = t1;
 		addToParent(state, node);
 	}
 	return ContinueTraversal;
 }
 //add by Look end
 
+
+//add by zwbrush
 Response CSGTermEvaluator::visit(State &state, const AlignNode &node)
 {
-	if (state.isPrefix()) 
-	{
-		shared_ptr<CSGTerm> t1;
-		if (this->geomevaluator) 
-		{
-					shared_ptr<const Geometry> geom = this->geomevaluator->evaluateGeometry((const AbstractNode&)node, false);
-					if (geom->getDimension() == 2) {
-						
-						shared_ptr<const Polygon2d> polygons = dynamic_pointer_cast<const Polygon2d>(geom);
-						assert(polygons);
-						
-						BoundingBox bbox= polygons->getBoundingBox();
-						Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
-			
-						state.setMatrix(state.matrix() * _matrix );			
-						
-					}
-					else if (geom->getDimension() == 3) {
-						shared_ptr<const PolySet> ps = dynamic_pointer_cast<const PolySet>(geom);
-						if (ps) {
-							
-							BoundingBox bbox= ps->getBoundingBox();
-							Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
-
-							//PRINTB("pp prexxx %lf", _matrix[]);
-							state.setMatrix( _matrix  * state.matrix() * _matrix);	
-
-						}
-						else {
-							shared_ptr<const CGAL_Nef_polyhedron> N = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom);
-							assert(N);
-								
-							BoundingBox bbox = N->getBoundingBox();
-							Transform3d _matrix = GeometryEvaluator::getAlignMartix(bbox, node.m_plane);
-			
-							state.setMatrix(state.matrix() * _matrix);
-						}
-					}
-		}
-	}
 	if (state.isPostfix()) {
-		applyToChildren(node, CSGT_UNION);
+		shared_ptr<CSGTerm> t1;
+   		 // FIXME: Calling evaluator directly since we're not a PolyNode. Generalize this.
+		shared_ptr<const Geometry> geom;
+		if (this->geomevaluator) {
+			geom = this->geomevaluator->evaluateGeometry(node, false);
+			if (geom) {
+				t1 = evaluate_csg_term_from_geometry(state, this->highlights, this->background, 
+																						 geom, node.modinst, node);
+			}
+			node.progress_report();
+		}
+		this->stored_term[node.index()] = t1;
 		addToParent(state, node);
 	}
 	return ContinueTraversal;
 }
-
+//end of add of zwbrush
 
 Response CSGTermEvaluator::visit(State &state, const ColorNode &node)
 {

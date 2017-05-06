@@ -9,7 +9,7 @@
 #ifdef __MINGW32__
 #define _GL_STDIO_H
 #define sprintf sprintf
-#endif
+#endif 
 
 #include <QString>
 #include "printutils.h"
@@ -21,6 +21,13 @@ inline QString _( const char *msgid, int category )
 	Q_UNUSED( category );
 	return QString::fromUtf8( _( msgid ) );
 }
+
+inline QString _(const char *msgid, const char *disambiguation)
+{
+	Q_UNUSED(disambiguation);
+	return QString::fromUtf8(_(msgid));
+}
+
 
 #endif
 

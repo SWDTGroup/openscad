@@ -641,7 +641,7 @@ void export_svg(const Polygon2d &poly, std::ostream &output , Context *context)
 		}
 		output << " z\n";
 	}
-	output << "\" stroke=\"black\" fill=\"lightgray\" stroke-width=\"0.5\"/>";
+	output << "\" stroke=\"black\" fill=\"black\" stroke-width=\"0.5\"/>";
 
 	output << "</svg>\n";	
 

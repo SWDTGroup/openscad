@@ -19,6 +19,7 @@ namespace ClipperUtils {
 	Polygon2d *apply(const std::vector<const Polygon2d*> &polygons, ClipperLib::ClipType);
 	Polygon2d *apply(const std::vector<ClipperLib::Paths> &pathsvector, ClipperLib::ClipType);
 
+	Polygon2d* SimplifyPolygon2d(const Polygon2d &polygon); //add by zwbrush
 	Polygon2d* findLargest(const Polygon2d &poly); 	//add by zwbrush
 	Polygon2d *applyOutline2D(const std::vector<const Polygon2d*> &polygons); 	//add by zwbrush
 

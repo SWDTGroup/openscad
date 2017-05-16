@@ -264,7 +264,16 @@ namespace ClipperUtils {
 		return toPolygon2d(result);
 	}
 
-	
+	Polygon2d* SimplifyPolygon2d(const Polygon2d &polygon)
+	{
+
+		ClipperLib::Paths in_polys = ClipperUtils::fromPolygon2d(polygon);
+		ClipperLib::Paths  out_polys;
+		ClipperLib::SimplifyPolygons(in_polys, out_polys);
+
+		return toPolygon2d(sanitize((const ClipperLib::Paths&)out_polys));
+	}
+		
 	Polygon2d* findLargest(const Polygon2d &polygon)
 	{
 		

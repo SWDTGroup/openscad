@@ -496,7 +496,7 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 
 	if(node.keep_main)
 		p_poly =  ClipperUtils::findLargest(poly1); 
-	const Polygon2d& poly = *p_poly;
+	const Polygon2d& poly = *p_poly;	
 	pt_priority_queue p_queue;
 	std::vector<std::vector<struct_pt_link> > pt_vecs;
 	pt_vecs.reserve(poly.outlines().size());
@@ -1108,6 +1108,9 @@ static void add_slice(PolySet *ps, const Polygon2d &poly,
 */
 static Geometry *extrudePolygon(const LinearExtrudeNode &node, const Polygon2d &poly)
 {
+//	PRINTB("brefore simplify %d", poly1.outlines().size());
+//	Polygon2d &poly = *ClipperUtils::SimplifyPolygon2d(poly1);
+//	PRINTB("after simplify %d", poly.outlines().size());
 	bool cvx = poly.is_convex();
 	PolySet *ps = new PolySet(3, !cvx ? boost::tribool(false) : node.twist == 0 ? boost::tribool(true) : unknown);
 	ps->setConvexity(node.convexity);
@@ -1130,9 +1133,10 @@ static Geometry *extrudePolygon(const LinearExtrudeNode &node, const Polygon2d &
 		std::reverse(p.begin(), p.end());
 	}
 	translate_PolySet(*ps_bottom, Vector3d(0,0,h1));
-
+         
 	ps->append(*ps_bottom);
 	delete ps_bottom;
+	
 	if (node.scale_x > 0 || node.scale_y > 0) {
 		Polygon2d top_poly(poly);
 		Eigen::Affine2d trans(Eigen::Scaling(node.scale_x, node.scale_y) *
@@ -1143,6 +1147,7 @@ static Geometry *extrudePolygon(const LinearExtrudeNode &node, const Polygon2d &
 		ps->append(*ps_top);
 		delete ps_top;
 	}
+
     size_t slices = node.slices;
 
 	for (unsigned int j = 0; j < slices; j++) {
@@ -1157,6 +1162,7 @@ static Geometry *extrudePolygon(const LinearExtrudeNode &node, const Polygon2d &
 		add_slice(ps, poly, rot1, rot2, height1, height2, scale1, scale2);
 	}
 
+	//delete &poly;
 	return ps;
 }
 

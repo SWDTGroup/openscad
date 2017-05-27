@@ -351,7 +351,12 @@ src/FontCache.h \
            src/AutoUpdater.h \
            src/launchingscreen.h \
            src/legacyeditor.h \
-           src/LibraryInfoDialog.h
+           src/LibraryInfoDialog.h\
+           \
+           src/Carve/PolygonCarve.h\
+           src/Carve/DataConversionm.h\
+
+		   
 
 SOURCES += \ 
 	   src/libsvg/libsvg.cc \
@@ -367,7 +372,7 @@ SOURCES += \
            src/libsvg/shape.cc \
            src/libsvg/transformation.cc \
            src/libsvg/util.cc \
-	   src/import_svg.cc \
+	    src/import_svg.cc \
            \
 	   src/version_check.cc \
            src/ProgressWidget.cc \
@@ -466,7 +471,13 @@ SOURCES += \
            src/FontListTableView.cc \
            src/launchingscreen.cc \
            src/legacyeditor.cc \
-           src/LibraryInfoDialog.cc
+           src/LibraryInfoDialog.cc\
+           \
+           src/Carve/PolygonCarve.cpp\
+           src/Carve/DataConversionm.cpp\
+
+
+		   
 
 # ClipperLib
 SOURCES += src/polyclipping/clipper.cpp

@@ -1,6 +1,7 @@
 #pragma once
 
 enum OpenSCADOperator {
+	OPENSCAD_CARVE,	//add by Look
 	OPENSCAD_UNION, 
 	OPENSCAD_INTERSECTION, 
 	OPENSCAD_DIFFERENCE, 

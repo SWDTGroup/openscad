@@ -29,6 +29,10 @@
 #include "calc.h"
 #include "dxfdata.h"
 
+#include "Carve/DataConversionm.h"	//add by Look
+#undef max(a, b)	//add by Look
+#undef min(a, b)	//add by Look
+
 #include <algorithm>
 #include <queue>
 #include <boost/foreach.hpp>
@@ -86,6 +90,7 @@ shared_ptr<const Geometry> GeometryEvaluator::evaluateGeometry(const AbstractNod
 GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const AbstractNode &node, OpenSCADOperator op)
 {
 	unsigned int dim = 0;
+	/*
 	BOOST_FOREACH(const Geometry::ChildItem &item, this->visitedchildren[node.index()]) {
 		if (!item.first->modinst->isBackground() && item.second) {
 			if (!dim) dim = item.second->getDimension();
@@ -101,6 +106,151 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const Abstrac
         return ResultObject(p2d);
     }
     else if (dim == 3) return applyToChildren3D(node, op);
+	return ResultObject();
+	*/
+	if (op != OPENSCAD_CARVE)
+	{
+		BOOST_FOREACH(const Geometry::ChildItem &item, this->visitedchildren[node.index()]) {
+			if (!item.first->modinst->isBackground() && item.second) {
+				if (!dim) dim = item.second->getDimension();
+				else if (dim != item.second->getDimension()) {
+					PRINT("WARNING: Mixing 2D and 3D objects is not supported.");
+					break;
+				}
+			}
+		}
+		if (dim == 2) {
+			Polygon2d *p2d = applyToChildren2D(node, op);
+			assert(p2d);
+			return ResultObject(p2d);
+		}
+		else if (dim == 3) return applyToChildren3D(node, op);
+		return ResultObject();
+	}
+	else
+	{	//carve()
+		bool isCarve = false;
+		bool is2and3dimension = false;
+		bool isFirst2dim = false;
+		BOOST_FOREACH(const Geometry::ChildItem &item, this->visitedchildren[node.index()]) {
+			if (!item.first->modinst->isBackground() && item.second) {
+				if (!dim) dim = item.second->getDimension();
+				else if (dim != item.second->getDimension()) {
+					//PRINT("WARNING: Mixing 2D and 3D objects is not supported.");
+					if (dim * item.second->getDimension() == 6 && dim + item.second->getDimension()==5)
+					{
+						is2and3dimension = true;
+						if (dim == 2) isFirst2dim = true;
+						else isFirst2dim = false;
+					}
+					else
+					{
+						PRINT("WARNING: Mixing 2D and 3D objects is not supported.");
+					}
+					break;
+				}
+			}
+		}
+		if (is2and3dimension && this->visitedchildren[node.index()].size()==2)
+		{
+			isCarve = true;
+		}
+
+
+		if (!isCarve)
+		{
+			PRINT("ERROR: carve function's arguments were wrong!");
+		}
+		else
+		{
+			//carve
+			printf("begin carve polygon now!\n");
+			shared_ptr<const Geometry> ps;
+			shared_ptr<const class Geometry> geom_3d, geom_2d;
+			if (!isFirst2dim) {
+				geom_2d = this->visitedchildren[node.index()].back().second;
+				geom_3d = this->visitedchildren[node.index()].front().second;
+			} else {
+				geom_2d = this->visitedchildren[node.index()].front().second;
+				geom_3d = this->visitedchildren[node.index()].back().second;
+			}
+			//3d model
+			shared_ptr<const PolySet> ps_3d = dynamic_pointer_cast<const PolySet>(geom_3d);
+			if (ps_3d==NULL) 
+			{
+
+				shared_ptr<const CGAL_Nef_polyhedron> chN = dynamic_pointer_cast<const CGAL_Nef_polyhedron>(geom_3d);
+				if (chN) 
+				{
+					PolySet *ps_new = new PolySet(3);
+					bool err = CGALUtils::createPolySetFromNefPolyhedron3(*chN->p3, *ps_new);
+					if (err) {
+						PRINT("ERROR: Nef->PolySet failed");
+					}
+					else {
+						ps_3d.reset(ps_new);
+					}
+				}
+				else
+				{
+					PRINT("ERROR: Nef->PolySet failed  node's model data is NULL");
+				}
+			}
+			/* */
+			PolySet tessPSValue(3);
+			PolysetUtils::tessellate_faces(*ps_3d.get(), tessPSValue);
+			PolySet *newPs = new PolySet(3);
+			PolysetUtils::polyset_subdivide(tessPSValue, *newPs, 8);
+			shared_ptr<PolySet> ps_3d_dynamic;
+			ps_3d_dynamic.reset(newPs);
+			ps_3d = ps_3d_dynamic;
+
+
+			//to vtkPolyData
+			vtkSmartPointer<vtkPolyData> polyData = Shapetizer2::polySetToPolyData(ps_3d.get());
+			//Look::savePolyData(polyData, "/root/polydataSave.stl");
+			//to LKPolygon
+			Shapetizer2::LKPolygon lkPolygon = Shapetizer2::polygon2dToLKPolygonValue((const Polygon2d*)geom_2d.get());
+			// 		Shapetizer2::LKPolygon lkPolygon;
+			// 		lkPolygon.rings.clear();
+			// 		Shapetizer2::LKRing ring;
+			// 		ring.push_back(Shapetizer2::NewLKPoint(0.273621*15, 0.000000, 3.839996));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(-0.245361*15, 0.000000, 3.839996));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(-0.245361*15, 0.000000, 0.000000));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(0.273621*15, 0.000000, 0.000000));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(-3, 0, -3));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(3, 0, -3));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(3, 0, 3));
+			// 		ring.push_back(Shapetizer2::NewLKPoint(-3, 0, 3));
+			//ring.push_back(Shapetizer2::NewLKPoint(-3, 0, -3));
+			//		lkPolygon.rings.push_back(ring);
+
+
+			//do carve
+			CsgNode &csgNode = *(CsgNode *)&node;
+			Shapetizer2::PolygonCarve plgCarve;
+			plgCarve.setFontPolygon( lkPolygon );
+			plgCarve.setDepth(csgNode.carve_depth);
+			plgCarve.setSubdivideLen(csgNode.carve_subdivideLen);
+			plgCarve.setModelPolyData(polyData);
+
+			plgCarve.update();
+			if (plgCarve.getErrCode() != 0)
+			{
+				fprintf(stderr, "carve error: %i %s\n", plgCarve.getErrCode(), plgCarve.getError());
+				ps = geom_3d;
+			}
+			else
+			{
+				//Look::savePolyData(plgCarve.getResult(), "/root/newPolygonCarve.stl", true);
+				//printf("carving is successed!\n");
+				ps = dynamic_pointer_cast<const Geometry>(Shapetizer2::polyDataToPolysetPtr(plgCarve.getResult()));
+			}
+
+
+			return (ps);
+		}
+	}
 	return ResultObject();
 }
 

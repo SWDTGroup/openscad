@@ -33,6 +33,11 @@
 #include <sstream>
 #include <assert.h>
 
+#include "evalcontext.h"
+#include <vector>
+#include <boost/assign/std/vector.hpp>
+using namespace boost::assign; //add by Look bring 'operator+=()' into scope
+
 class CsgModule : public AbstractModule
 {
 public:
@@ -41,10 +46,36 @@ public:
 	virtual AbstractNode *instantiate(const Context *ctx, const ModuleInstantiation *inst, EvalContext *evalctx) const;
 };
 
-AbstractNode *CsgModule::instantiate(const Context*, const ModuleInstantiation *inst, EvalContext *evalctx) const
+AbstractNode *CsgModule::instantiate(const Context* ctx, const ModuleInstantiation *inst, EvalContext *evalctx) const
 {
 	inst->scope.apply(*evalctx);
 	CsgNode *node = new CsgNode(inst, type);
+	//add by Look begin
+	if (type == OPENSCAD_CARVE)
+	{
+		AssignmentList args;
+		args += Assignment("depth");
+		args += Assignment("subdivideLen");
+		Context c(ctx);
+		c.setVariables(args, evalctx);
+		inst->scope.apply(*evalctx);
+
+		ValuePtr depth = c.lookup_variable("depth");
+		if (depth->type() == Value::NUMBER)
+		{
+			node->carve_depth  = depth->toDouble();
+		}
+		ValuePtr subdivideLen = c.lookup_variable("subdivideLen");
+		if (subdivideLen->type() == Value::NUMBER)
+		{
+			node->carve_subdivideLen  = subdivideLen->toDouble();
+		}
+
+		//node->fn = c.lookup_variable("$fn")->toDouble();
+		//node->fs = c.lookup_variable("$fs")->toDouble();
+		//node->fa = c.lookup_variable("$fa")->toDouble();
+	}
+	//add by Look end
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);
 	node->children.insert(node->children.end(), instantiatednodes.begin(), instantiatednodes.end());
 	return node;
@@ -52,12 +83,17 @@ AbstractNode *CsgModule::instantiate(const Context*, const ModuleInstantiation *
 
 std::string CsgNode::toString() const
 {
-	return this->name() + "()";
+	std::stringstream stream;
+	stream << this->name() << "(depth=" << carve_depth << ", subdivideLen=" << carve_subdivideLen << ")";
+	return stream.str();
 }
 
 std::string CsgNode::name() const
 {
 	switch (this->type) {
+	case OPENSCAD_CARVE:
+		return "carve";
+		break;
 	case OPENSCAD_UNION:
 		return "union";
 		break;
@@ -75,6 +111,7 @@ std::string CsgNode::name() const
 
 void register_builtin_csgops()
 {
+	Builtins::init("carve", new CsgModule(OPENSCAD_CARVE));	//add by Look
 	Builtins::init("union", new CsgModule(OPENSCAD_UNION));
 	Builtins::init("difference", new CsgModule(OPENSCAD_DIFFERENCE));
 	Builtins::init("intersection", new CsgModule(OPENSCAD_INTERSECTION));

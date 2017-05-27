@@ -222,7 +222,7 @@ Highlighter::Highlighter(QTextDocument *parent)
 	tokentypes["keyword"] << "module" << "function" << "for" << "intersection_for" << "if" << "assign" << "echo"<< "search" << "str" << "let";
 	//tokentypes["transform"] << "scale" << "translate" << "rotate" << "multmatrix" << "color" << "projection" << "hull" << "resize" << "mirror" << "minkowski";
 	tokentypes["transform"] << "scale" << "translate" << "rotate" << "multmatrix" << "color" << "projection" << "hull" << "resize" << "mirror" << "minkowski" << "polarization"/*polarization([o_width, o_height, k_x, k_y]) */ ; //modify by Look
-	tokentypes["csgop"]	<< "union" << "intersection" << "difference" << "render";
+	tokentypes["csgop"]	<< "union" << "intersection" << "difference" << "carve" << "render";//modified by Look
 	tokentypes["prim3d"] << "cube" << "cylinder" << "sphere" << "polyhedron";
 	tokentypes["prim2d"] << "square" << "polygon" << "circle";
 	tokentypes["import"] << "include" << "use" << "import_stl" << "import" << "import_dxf" << "dxf_dim" << "dxf_cross" << "surface";

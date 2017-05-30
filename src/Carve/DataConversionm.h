@@ -55,7 +55,7 @@ namespace Look {
 		if (extStr == "stl")
 		{
 			vtkSTLWriter *stlWriter = vtkSTLWriter::New();
-			stlWriter->SetInput(polyData);
+			stlWriter->SetInputData(polyData);
 			stlWriter->SetFileName( path.c_str() );
 			if (isBinary) stlWriter->SetFileTypeToBinary();
 			stlWriter->Update();
@@ -64,7 +64,7 @@ namespace Look {
 		else if (extStr == "ply")
 		{
 			vtkPLYWriter *plyWriter = vtkPLYWriter::New();
-			plyWriter->SetInput(polyData);
+			plyWriter->SetInputData(polyData);
 			plyWriter->SetFileName(path.c_str());
 			if (isBinary) plyWriter->SetFileTypeToBinary();
 			plyWriter->Update();
@@ -73,7 +73,7 @@ namespace Look {
 		else if (extStr == "vtk")
 		{
 			vtkPolyDataWriter *polydataWriter = vtkPolyDataWriter::New();
-			polydataWriter->SetInput( polyData );
+			polydataWriter->SetInputData( polyData );
 			polydataWriter->SetFileName(path.c_str());
 			if (isBinary) polydataWriter->SetFileTypeToBinary();
 			polydataWriter->Update();

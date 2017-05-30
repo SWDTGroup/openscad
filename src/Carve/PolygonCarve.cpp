@@ -1,7 +1,8 @@
 #include "PolygonCarve.h"
 
 // #include <glutess.h>
-// #include <tess.h>
+// #include <tess.h>
+
 
 #undef _TEST_DEMO
 
@@ -249,7 +250,7 @@ namespace Shapetizer2
 		intersection.v.x = (p4.v.x*s1+p3.v.x*s2)/(s1+s2);
 		intersection.v.z = (p4.v.z*s1+p3.v.z*s2)/(s1+s2);
 
-		// 给交点的y赋值
+		// 给交?愕膟赋值
 		NewLKPoint vectorP1P2;
 		NewLKPoint vectorP1Insert;
 		vectorP1P2.v.x = p2.v.x - p1.v.x;
@@ -430,7 +431,7 @@ namespace Shapetizer2
 		{
 			vtkSmartPointer<vtkTransformPolyDataFilter> tpdFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 			tpdFilter->SetTransform( allTransformToVerticality );
-			tpdFilter->SetInput( modelPolyDataOrigin );
+			tpdFilter->SetInputData( modelPolyDataOrigin );
 			tpdFilter->Update();
 			modelPolyData = tpdFilter->GetOutput();
 		}
@@ -1182,7 +1183,7 @@ namespace Shapetizer2
 			vtkSmartPointer<vtkTransformPolyDataFilter> tpdFilter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 			allTransformToVerticality->Inverse();
 			tpdFilter->SetTransform( allTransformToVerticality );
-			tpdFilter->SetInput( result );
+			tpdFilter->SetInputData( result );
 			tpdFilter->Update();
 			result = tpdFilter->GetOutput();
 		}
@@ -1534,7 +1535,7 @@ namespace Shapetizer2
 					newBoundEdge->sameClockwiseAsTriangle = boundEdge->sameClockwiseAsTriangle;
 					newBoundEdge->ptId = boundEdge->sameClockwiseAsTriangle ? pmTri->ids[idB] : newPtRealIndex;
 					newBoundEdge->edgeIndex = 1;
-					//边树枝节的子节点赋值
+					//边树枝节?淖咏诘愀持?
 					boundEdge->subdivides[boundEdge->sameClockwiseAsTriangle?1:0] = newBoundEdge;
 					//边界赋予三角形属性
 					newTri->boundEdges[1] = newBoundEdge;

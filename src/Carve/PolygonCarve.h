@@ -81,7 +81,7 @@
 #include <vtkPNGWriter.h>
 #include <vtkSphereSource.h>
 #include <vtkGraphicsFactory.h>
-#include <vtkImagingFactory.h>
+//#include <vtkImagingFactory.h>
 #include <vtkCellArray.h>
 #include <vtkPolyData.h>
 #include <vtkPoints.h>

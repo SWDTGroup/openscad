@@ -121,15 +121,18 @@ namespace PolysetUtils {
 
 	void polyset_subdivide(const PolySet &inps, PolySet &outps, double max_edge_length,  subdivide_axis axis)
 	{
-		printf("polyset_subdivide %d polygons, max edge length %lf\n", inps.polygons.size(), max_edge_length);							
+		//printf("polyset_subdivide %d polygons, max edge length %lf\n", inps.polygons.size(), max_edge_length);							
 
 		double maxLen2 = max_edge_length * max_edge_length;
 
 		std::stack<SBTriangle> waitingSubdivideTris;
 		///模型读取为三角形
+		shared_ptr<PolySet> tess_ps;
+		tess_ps.reset( new PolySet(3));
+		tessellate_faces(inps,  *tess_ps);
 
 		
-		BOOST_FOREACH(const Polygon &pgon, inps.polygons) {
+		BOOST_FOREACH(const Polygon &pgon, tess_ps->polygons) {
 			SBTriangle tri;
 			int i=0;
 			BOOST_FOREACH (const Vector3d &v, pgon) {
@@ -162,7 +165,7 @@ namespace PolysetUtils {
 			outps.append_vertex(tri.vertices[2][0], tri.vertices[2][1], tri.vertices[2][2]);
 		}
 
-		printf("polyset_subdivide done. output %d %d polygons\n", outps.polygons.size(), leafTriangles.size());							
+		//printf("polyset_subdivide done. output %d %d polygons\n", outps.polygons.size(), leafTriangles.size());							
 
 	}
 

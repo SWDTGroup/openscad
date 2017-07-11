@@ -65,6 +65,12 @@
 #include <boost/foreach.hpp>
 #include "boosty.h"
 
+extern "C"
+{ 
+#include "lua/lua.h"
+#include "lua/lualib.h"
+#include "lua/lauxlib.h"
+}
 #ifdef __APPLE__
 #include "AppleEvents.h"
   #ifdef OPENSCAD_UPDATER
@@ -770,10 +776,16 @@ int gui(const vector<string> &inputFiles, const fs::path &original_path, int arg
 }
 #endif // OPENSCAD_QTGUI
 
+lua_State *g_lua_state = NULL;
+
 int main(int argc, char **argv)
 {
 	int rc = 0;
 	bool isGuiLaunched = getenv("GUI_LAUNCHED") != 0;
+
+ 	g_lua_state = lua_open();
+	luaL_openlibs(g_lua_state);
+
 	StackCheck::inst()->init();
 	
 #ifdef Q_OS_MAC
@@ -941,5 +953,6 @@ int main(int argc, char **argv)
 
 	Builtins::instance(true);
 
+	lua_close(g_lua_state);
 	return rc;
 }

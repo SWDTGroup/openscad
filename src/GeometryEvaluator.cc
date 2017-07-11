@@ -1181,7 +1181,13 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
  														//注意：强制把极化周长设置为node模型的周长
 							//BoundingBox bbox = newps_subdivided->getBoundingBox();
 							//double o_size = bbox.max()[0] - bbox.min()[0];
-							newps_subdivided->polarization(o_size, node.angle);
+							if(node.exp.empty())
+								newps_subdivided->polarization(o_size, node.angle);
+							else
+								if(!newps_subdivided->lua_exp(node.exp))
+									PRINTB("ERROR: lua -- %s" , node.exp.c_str());
+
+
  							geom = newps_subdivided; 
 					}
 				}

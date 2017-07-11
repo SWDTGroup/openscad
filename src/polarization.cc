@@ -24,7 +24,10 @@
  *
  */
  //add by Look
+#include "fileutils.h"
 
+#include <iostream>
+#include <fstream>
 #include "polarizationNode.h"
 #include "module.h"
 #include "evalcontext.h"
@@ -36,10 +39,16 @@
 #include <vector>
 #include <assert.h>
 #include <boost/assign/std/vector.hpp>
+
+
+
+
 using namespace boost::assign; // bring 'operator+=()' into scope
 
 enum polarization_type_e {
-	polarization_normal
+	polarization_normal,
+	lua_normal
+
 };
 
 class PolarizationModule : public AbstractModule
@@ -59,6 +68,9 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 	case polarization_normal:
 		args += Assignment("angle");
 		break;
+	case lua_normal:
+		args += Assignment("exp");
+		break;
 	default:
 		assert(false);
 	}
@@ -74,14 +86,24 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 		{
 			node->angle  = angle->toDouble();
 		}
+	}
+	else
+	{
+		ValuePtr v = c.lookup_variable("file");
 
+		std::string filename = lookup_file(v->isUndefined() ? "" : v->toString(), inst->path(), ctx->documentPath());
 
-		node->fn = c.lookup_variable("$fn")->toDouble();
-		node->fs = c.lookup_variable("$fs")->toDouble();
-		node->fa = c.lookup_variable("$fa")->toDouble();
-
+		   std::ifstream inFile(filename.c_str(), std::ios::in | std::ios::binary);
+		    std::ostringstream oss;
+		    oss << inFile.rdbuf();
+		    node->exp = oss.str();
+		    inFile.close();
+		
 
 	}
+	node->fn = c.lookup_variable("$fn")->toDouble();
+	node->fs = c.lookup_variable("$fs")->toDouble();
+	node->fa = c.lookup_variable("$fa")->toDouble();
 
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);
 	node->children.insert(node->children.end(), instantiatednodes.begin(), instantiatednodes.end());
@@ -107,4 +129,5 @@ std::string PolarizationNode::name() const
 void register_builtin_polarization()
 {
 	Builtins::init("sz_polarization", new PolarizationModule(polarization_normal));
+	Builtins::init("sz_lua", new PolarizationModule(lua_normal));
 }

@@ -32,6 +32,12 @@
 
 #include <Eigen/LU>
 #include <boost/foreach.hpp>
+extern "C"
+{ 
+#include "lua/lua.h"
+#include "lua/lauxlib.h"
+}
+
 
 /*! /class PolySet
 
@@ -184,6 +190,46 @@ void PolySet::polarization(const double o_size, const double angle)
 	this->dirty = true;
 }
 //add by Look end
+
+//add by zwbrush begin
+extern lua_State *g_lua_state;
+bool PolySet::lua_exp(const std::string& exp)
+{
+	if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
+		return false;
+	BOOST_FOREACH(Polygon &p, this->polygons) {
+		BOOST_FOREACH(Vector3d &v, p) {
+						
+			lua_pushnumber(g_lua_state, v.x());
+			lua_setglobal(g_lua_state, "x");
+			lua_pushnumber(g_lua_state, v.y());
+			lua_setglobal(g_lua_state, "y");
+			lua_pushnumber(g_lua_state, v.z());
+			lua_setglobal(g_lua_state, "z");
+
+			lua_pushvalue(g_lua_state, -1);
+
+			lua_call(g_lua_state, 0,0);
+			{
+				lua_getglobal(g_lua_state, "x");
+				v(0) =  (double)lua_tonumber(g_lua_state, -1);
+				lua_getglobal(g_lua_state, "y");
+				v(1) =  (double)lua_tonumber(g_lua_state, -1);
+				lua_getglobal(g_lua_state, "z");
+				v(2) =  (double)lua_tonumber(g_lua_state, -1);
+				lua_pop(g_lua_state, 3);
+			}
+			
+		}
+	}
+	lua_pop(g_lua_state, 1);
+
+	this->dirty = true;
+	return true;
+}
+//add by zwbrush end
+
+
 
 bool PolySet::is_convex() const {
 	if (convex || this->isEmpty()) return true;

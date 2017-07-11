@@ -22,5 +22,6 @@ public:
 	double o_size;
 	double angle;
 	double fn, fs, fa;
+	std::string exp; 
 
 };

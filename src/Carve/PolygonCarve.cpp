@@ -57,7 +57,7 @@ namespace Shapetizer2
 		{
 			const double delta = 2.e-10;
 			//if (x == workTriangle.pt[i].x && y == workTriangle.pt[i].z)
-			if ( abs(pt.v.x - workTriangle.pt[i].v.x) < delta && abs(pt.v.z - workTriangle.pt[i].v.z) < delta )
+			if ( fabs(pt.v.x - workTriangle.pt[i].v.x) < delta && fabs(pt.v.z - workTriangle.pt[i].v.z) < delta )
 			{
 				index = i;
 				return PointWithPolygonOnVertex;	//点在顶点上， 顶点非常靠近的情况没有处理
@@ -70,7 +70,7 @@ namespace Shapetizer2
 			const double delta = 1.e-10;
 			const STWorkLine &line = workTriangle.line[j];
 			//if( workTriangle.pt[i].z == workTriangle.pt[j].z && pt.z == workTriangle.pt[i].z && pt.x > min(workTriangle.pt[j].x, workTriangle.pt[i].x) && pt.x < max(workTriangle.pt[j].x, workTriangle.pt[i].x) )
-			if( abs(line.a * pt.v.x + line.b * pt.v.z + line.c) < delta
+			if( fabs(line.a * pt.v.x + line.b * pt.v.z + line.c) < delta
 				&& pt.v.x > line.minX - delta && pt.v.x < line.maxX + delta
 				&& pt.v.z > line.minZ - delta && pt.v.z < line.maxZ + delta
 				)
@@ -112,7 +112,7 @@ namespace Shapetizer2
 				//double intersectionXSubX = workTriangle.pt[i].x+(pt.z-workTriangle.pt[i].z)/(workTriangle.pt[j].z-workTriangle.pt[i].z)*(workTriangle.pt[j].x-workTriangle.pt[i].x) - pt.x;
 
 				// 点与边非常靠近算直接算在多形内
-				//if( abs(intersectionXSubX) < 1.e-9 )
+				//if( fabs(intersectionXSubX) < 1.e-9 )
 				//{
 				//	index = j;
 				//	return PointWithPolygonOnEdge;
@@ -168,12 +168,12 @@ namespace Shapetizer2
 
 // 		const double delta = 1.e-10;
 // 		if (
-// 			( abs(exp_p3) < delta
+// 			( fabs(exp_p3) < delta
 // 			  && p3.x > line1.minX - delta && p3.x < line1.maxX + delta
 // 		      && p3.z > line1.minZ - delta && p3.z < line1.maxZ + delta
 // 			)
 // 			||
-// 			( abs(exp_p4) < delta
+// 			( fabs(exp_p4) < delta
 // 			  && p4.x > line1.minX - delta && p4.x < line1.maxX + delta
 // 			  && p4.z > line1.minZ - delta && p4.z < line1.maxZ + delta
 // 			)
@@ -188,12 +188,12 @@ namespace Shapetizer2
 			double exp_p2 = A * p2.v.x + B * p2.v.z + C;
 
 // 			if (
-// 				( abs(exp_p1) < delta
+// 				( fabs(exp_p1) < delta
 // 				&& p1.x > line2.minX - delta && p1.x < line2.maxX + delta
 // 				&& p1.z > line2.minZ - delta && p1.z < line2.maxZ + delta
 // 				)
 // 				||
-// 				( abs(exp_p2) < delta
+// 				( fabs(exp_p2) < delta
 // 				&& p2.x > line2.minX - delta && p2.x < line2.maxX + delta
 // 				&& p2.z > line2.minZ - delta && p2.z < line2.maxZ + delta
 // 				)
@@ -227,7 +227,7 @@ namespace Shapetizer2
 
 	static inline double fArea(const NewLKPoint& p1,const NewLKPoint& p2,const NewLKPoint& p3)  
 	{  
-		return abs(Area(p1,p2,p3));  
+		return fabs(Area(p1,p2,p3));  
 	}  
 	static inline NewLKPoint segmentIntersetionXZ(const NewLKPoint& pt1,const NewLKPoint& pt2,const NewLKPoint& p3,const NewLKPoint& p4)  
 	{
@@ -917,7 +917,7 @@ namespace Shapetizer2
 								for (j=0, k=0; j<h; j++) /*每次预置k=0，循环扫描后更新k*/
 								{
 									if ( (intersections[j].v.x - intersections[j+1].v.x) * vectorPt1Pt2.v.x > 1.e-16
-										|| ( abs((intersections[j].v.x - intersections[j+1].v.x) * vectorPt1Pt2.v.x) <= 1.e-16
+										|| ( fabs((intersections[j].v.x - intersections[j+1].v.x) * vectorPt1Pt2.v.x) <= 1.e-16
 										&& (intersections[j].v.z - intersections[j+1].v.z) * vectorPt1Pt2.v.z > 0 )
 										) /*大的放在后面，小的放到前面*/
 									{
@@ -1374,7 +1374,7 @@ namespace Shapetizer2
 			double len = (ptA.v.x - ptB.v.x) * (ptA.v.x - ptB.v.x) + (ptA.v.z - ptB.v.z) * (ptA.v.z - ptB.v.z);
 			double lenBC = (ptC.v.x - ptB.v.x) * (ptC.v.x - ptB.v.x) + (ptC.v.z - ptB.v.z) * (ptC.v.z - ptB.v.z);
 			double lenCA = (ptA.v.x - ptC.v.x) * (ptA.v.x - ptC.v.x) + (ptA.v.z - ptC.v.z) * (ptA.v.z - ptC.v.z);
-			//if (abs(pmTri->edgeLen2s[pmTri->longestEdgeId] - len) > 1e-4
+			//if (fabs(pmTri->edgeLen2s[pmTri->longestEdgeId] - len) > 1e-4
 			//	|| lenBC > len
 			//	|| lenCA > len
 			//	)
@@ -3197,7 +3197,7 @@ LoopFilter:
 					pt1pt2Vector.v.z = pt2.v.z - pt1.v.z;
 					// ACVector的向量夹角约等于pt1pt2Vector的，不换位置
 					// 向量同向检测
-					bool notNeedSwap = ACVector.v.x * pt1pt2Vector.v.x > 1.e-16 || (abs(ACVector.v.x * pt1pt2Vector.v.x) <= 1.e-16 && ACVector.v.z * pt1pt2Vector.v.z > 0);
+					bool notNeedSwap = ACVector.v.x * pt1pt2Vector.v.x > 1.e-16 || (fabs(ACVector.v.x * pt1pt2Vector.v.x) <= 1.e-16 && ACVector.v.z * pt1pt2Vector.v.z > 0);
 					pt1Pie = notNeedSwap ? pt1 : pt2;
 					pt2Pie = notNeedSwap ? pt2 : pt1;
 
@@ -3334,7 +3334,7 @@ LoopFilter:
 					double lineEquationValueVertex2 = (a * workTriangle.pt[(i+2)%3].v.x + b * workTriangle.pt[(i+2)%3].v.z + c);
 					double pointACLinearExpValMulti = lineEquationValueVertex1 * lineEquationValueVertex2;
 					// 做了处理，待验证 TODO: 有顶点在pt1 pt2的直线上的情况处理
-					if ( pointACLinearExpValMulti < 0 && abs(lineEquationValueVertex1) >= 5.e-10 && abs(lineEquationValueVertex2) >= 5.e-10 )
+					if ( pointACLinearExpValMulti < 0 && fabs(lineEquationValueVertex1) >= 5.e-10 && fabs(lineEquationValueVertex2) >= 5.e-10 )
 					{
 						ACTwoSidesOfLinePt1Pt2_AIndex = i;
 						break;

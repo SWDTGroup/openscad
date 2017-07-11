@@ -134,6 +134,7 @@ mingw* {
 
 CONFIG += qt
 QT += opengl concurrent
+QMAKE_CXXFLAGS += -std=c++0x
 
 # see http://fedoraproject.org/wiki/UnderstandingDSOLinkChange
 # and https://github.com/openscad/openscad/pull/119

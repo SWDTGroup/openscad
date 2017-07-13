@@ -1171,12 +1171,12 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
 							
 							if(node.fn > 0.0)
 								max_edge_lendgth =  o_size  / node.fn;
-							else if(node.fa > 0.0)
+							else if(node.fa > 12)
 								max_edge_lendgth =  o_size * node.fa / node.angle;
 							else 
 								max_edge_lendgth =  node.fs;
 
-							//printf("%lf , %lf, %lf, %lf, max_edge_lendgth %lf\n", o_size,node.fn,node.fa,  node.fs, max_edge_lendgth);
+							printf("%lf , %lf, %lf, %lf, max_edge_lendgth %lf\n", o_size,node.fn,node.fa,  node.fs, max_edge_lendgth);
 							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, max_edge_lendgth, PolysetUtils::subdivide_axis_x);
  														//注意：强制把极化周长设置为node模型的周长
 							//BoundingBox bbox = newps_subdivided->getBoundingBox();

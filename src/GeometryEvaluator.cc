@@ -575,8 +575,8 @@ Response GeometryEvaluator::visit(State &state, const OffsetNode &node)
 				const Polygon2d *polygon = dynamic_cast<const Polygon2d*>(geometry);
 				// ClipperLib documentation: The formula for the number of steps in a full
 				// circular arc is ... Pi / acos(1 - arc_tolerance / abs(delta))
-                double n = Calc::get_fragments_from_r(std::abs(node.delta), node.fn, node.fs, node.fa);
-				double arc_tolerance = std::abs(node.delta) * (1 - cos(M_PI / n));
+                double n = Calc::get_fragments_from_r(fabs(node.delta), node.fn, node.fs, node.fa);
+				double arc_tolerance = fabs(node.delta) * (1 - cos(M_PI / n));
 				const Polygon2d *result = ClipperUtils::applyOffset(*polygon, node.delta, node.join_type, node.miter_limit, arc_tolerance);
 				assert(result);
 				geom.reset(result);

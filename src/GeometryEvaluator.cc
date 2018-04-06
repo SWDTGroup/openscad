@@ -645,6 +645,9 @@ static Polygon2d  *decimatePolygon2d(const DecimationNode &node, const Polygon2d
 	if(node.target==0)
 		return new Polygon2d(poly1);
 
+  if(poly1.outlines().size()==0)
+  	return new Polygon2d(poly1);
+  	
 	const Polygon2d *p_poly = &poly1;
 
 	if(node.keep_main)

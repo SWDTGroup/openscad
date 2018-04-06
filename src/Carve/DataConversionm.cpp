@@ -85,18 +85,20 @@ namespace Shapetizer2
 		polydata->BuildCells();
 		vtkIdType npts, *pts;
 		double pt[3];
-		Polygon plyg(3);
+		
 		for (vtkIdType cellId = 0; cellId < polydata->GetNumberOfCells(); cellId++)
 		{
 			polydata->GetCellPoints(cellId, npts, pts);
+   		Polygon plyg;
+   		plyg.reserve(3);
 			for (int i = 0; i < 3; i++)
 			{
 				polydata->GetPoint(pts[i], pt);
-				plyg[i] = Vector3d(pt[0], pt[1], pt[2]);
+				plyg.push_back(Vector3d(pt[0], pt[1], pt[2]));
 			}
 			ps->append_poly(plyg);
 		}
-
+		
 		return shared_ptr<PolySet>(ps);
 	}
 

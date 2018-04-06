@@ -8,7 +8,7 @@
 #include "polarizationNode.h"//add by Look
 #include "alignNode.h" //add by zwbrush
 #include "CGAL_Nef_polyhedron.h" //add by zwbrush
-
+ 
 #include "colornode.h"
 #include "rendernode.h"
 #include "cgaladvnode.h"
@@ -168,6 +168,10 @@ Response CSGTermEvaluator::visit(State &state, const CsgNode &node)
 		case OPENSCAD_INTERSECTION:
 			op = CSGT_INTERSECTION;
 			break;
+		case OPENSCAD_CARVE:
+	//		op = CSGT_CARVE;
+		//	break;
+			return ContinueTraversal;
 		default:
 			assert(false);
 		}

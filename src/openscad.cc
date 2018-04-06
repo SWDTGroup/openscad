@@ -939,6 +939,7 @@ int main(int argc, char **argv)
 		if (!inputFiles.size()) help(argv[0], true);
 	}
 
+
 	if (arg_info || cmdlinemode) {
 		if (inputFiles.size() > 1) help(argv[0], true);
 		rc = cmdline(deps_output_file, inputFiles[0], camera, output_file, original_path, renderer, argc, argv);

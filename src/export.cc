@@ -155,6 +155,7 @@ void export_stl(const PolySet &ps, std::ostream& output)
 	output.write((const char*)&poly_size,4) ;
 	BOOST_FOREACH(const Polygon &p, triangulated.polygons) {
 		assert(p.size() == 3); // STL only allows triangles
+		/*
 		std::stringstream stream;
 		stream << p[0][0] << " " << p[0][1] << " " << p[0][2];
 		std::string vs1 = stream.str();
@@ -164,7 +165,8 @@ void export_stl(const PolySet &ps, std::ostream& output)
 		stream.str("");
 		stream << p[2][0] << " " << p[2][1] << " " << p[2][2];
 		std::string vs3 = stream.str();
-		if (vs1 != vs2 && vs1 != vs3 && vs2 != vs3) {
+		if (vs1 != vs2 && vs1 != vs3 && vs2 != vs3)
+		*/ {
 			// The above condition ensures that there are 3 distinct vertices, but
 			// they may be collinear. If they are, the unit normal is meaningless
 			// so the default value of "1 0 0" can be used. If the vertices are not

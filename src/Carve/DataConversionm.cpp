@@ -81,7 +81,7 @@ namespace Shapetizer2
 
 	PolySet* polyDataToPolysetPtr(vtkSmartPointer<vtkPolyData> polydata)
 	{
-		Look::savePolyData(polydata, "/home/zwbrush/polydataSave.stl");
+		//Look::savePolyData(polydata, "/home/zwbrush/polydataSave.stl");
 
 		PolySet *ps = new PolySet(3);
 		polydata->BuildCells();

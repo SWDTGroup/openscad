@@ -79,27 +79,29 @@ namespace Shapetizer2
 	}
 
 
-	shared_ptr<PolySet> polyDataToPolysetPtr(vtkSmartPointer<vtkPolyData> polydata)
+	PolySet* polyDataToPolysetPtr(vtkSmartPointer<vtkPolyData> polydata)
 	{
+		Look::savePolyData(polydata, "/home/zwbrush/polydataSave.stl");
+
 		PolySet *ps = new PolySet(3);
 		polydata->BuildCells();
-		vtkIdType npts, *pts;
-		double pt[3];
 		
 		for (vtkIdType cellId = 0; cellId < polydata->GetNumberOfCells(); cellId++)
 		{
+		  vtkIdType npts, *pts;
 			polydata->GetCellPoints(cellId, npts, pts);
    		Polygon plyg;
    		plyg.reserve(3);
 			for (int i = 0; i < 3; i++)
 			{
+				double pt[3];
 				polydata->GetPoint(pts[i], pt);
 				plyg.push_back(Vector3d(pt[0], pt[1], pt[2]));
 			}
 			ps->append_poly(plyg);
 		}
 		
-		return shared_ptr<PolySet>(ps);
+		return ps;
 	}
 
 

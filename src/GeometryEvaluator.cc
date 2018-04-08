@@ -246,12 +246,12 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const Abstrac
 			{
 				//Look::savePolyData(plgCarve.getResult(), "/root/newPolygonCarve.stl", true);
 				//printf("carving is successed!\n");
-					shared_ptr<PolySet> dd = Shapetizer2::polyDataToPolysetPtr(plgCarve.getResult());
-			ps = dynamic_pointer_cast<const Geometry>(dd);
+					PolySet* dd = Shapetizer2::polyDataToPolysetPtr(plgCarve.getResult());
+					ps.reset(dd);
 			}
 		
 
-			return (ps);
+			return ResultObject(ps);
 		}
 	}
 	return ResultObject();

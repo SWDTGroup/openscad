@@ -32,14 +32,14 @@ public:
 																 std::vector<shared_ptr<CSGTerm> > &background);
 
 private:
-	enum CsgOp {CSGT_UNION, CSGT_INTERSECTION, CSGT_DIFFERENCE, CSGT_MINKOWSKI};
+	enum CsgOp {CSGT_UNION, CSGT_INTERSECTION, CSGT_DIFFERENCE, CSGT_MINKOWSKI, CSGT_CARVE};
   void addToParent(const State &state, const AbstractNode &node);
 	void applyToChildren(const AbstractNode &node, CSGTermEvaluator::CsgOp op);
 
   const AbstractNode *root;
   typedef std::list<const AbstractNode *> ChildList;
 	std::map<int, ChildList> visitedchildren;
-
+ 
 public:
 	std::map<int, shared_ptr<CSGTerm> > stored_term; // The term evaluated from each node index
 

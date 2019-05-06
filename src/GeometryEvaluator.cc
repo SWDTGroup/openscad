@@ -130,6 +130,7 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const Abstrac
 	}
 	else
 	{	//carve()
+
 		bool isCarve = false;
 		bool is2and3dimension = false;
 		bool isFirst2dim = false;
@@ -234,22 +235,24 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const Abstrac
 			plgCarve.setDepth(csgNode.carve_depth);
 			plgCarve.setSubdivideLen(csgNode.carve_subdivideLen);
 			plgCarve.setModelPolyData(polyData);
-
+		
 			plgCarve.update();
+		
 			if (plgCarve.getErrCode() != 0)
 			{
-				fprintf(stderr, "carve error: %i %s\n", plgCarve.getErrCode(), plgCarve.getError());
+			fprintf(stderr, "carve error: %i %s\n", plgCarve.getErrCode(), plgCarve.getError());
 				ps = geom_3d;
 			}
 			else
 			{
 				//Look::savePolyData(plgCarve.getResult(), "/root/newPolygonCarve.stl", true);
 				//printf("carving is successed!\n");
-				ps = dynamic_pointer_cast<const Geometry>(Shapetizer2::polyDataToPolysetPtr(plgCarve.getResult()));
+					PolySet* dd = Shapetizer2::polyDataToPolysetPtr(plgCarve.getResult());
+					ps.reset(dd);
 			}
+		
 
-
-			return (ps);
+			return ResultObject(ps);
 		}
 	}
 	return ResultObject();

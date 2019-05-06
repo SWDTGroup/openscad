@@ -92,7 +92,7 @@ namespace Shapetizer2
 	vtkSmartPointer<vtkPolyData> polySetToPolyData(const PolySet *polyset); //polyset must be tesslated
 
 
-	shared_ptr<PolySet> polyDataToPolysetPtr(vtkSmartPointer<vtkPolyData> polydata);
+	PolySet* polyDataToPolysetPtr(vtkSmartPointer<vtkPolyData> polydata);
 
 
 	LKPolygon polygon2dToLKPolygonValue(const Polygon2d *polygon2d);

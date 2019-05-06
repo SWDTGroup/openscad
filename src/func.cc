@@ -211,6 +211,7 @@ static inline double rad2deg(double x)
 	return x * 180.0 / M_PI;
 }
 
+
 ValuePtr builtin_abs(const Context *, const EvalContext *evalctx)
 {
 	if (evalctx->numArgs() == 1) {
@@ -364,7 +365,7 @@ quit:
 // comment/undefine it to disable domain check
 #define TRIG_HUGE_VAL ((1L<<26)*360.0*(1L<<26))
 
-double sin_degrees(register double x)
+static double sin_degrees(register double x)
 {
 	// use positive tests because of possible Inf/NaN
 	if (x < 360.0 && x >= 0.0) {
@@ -408,7 +409,7 @@ ValuePtr builtin_sin(const Context *, const EvalContext *evalctx)
 	return ValuePtr::undefined;
 }
 
-double cos_degrees(register double x)
+static double cos_degrees(register double x)
 {
 	// use positive tests because of possible Inf/NaN
 	if (x < 360.0 && x >= 0.0) {
@@ -444,6 +445,7 @@ double cos_degrees(register double x)
 
 	return oppose ? -x : x;
 }
+
 
 ValuePtr builtin_cos(const Context *, const EvalContext *evalctx)
 {

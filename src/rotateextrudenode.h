@@ -11,6 +11,8 @@ public:
 		convexity = 0;
 		fn = fs = fa = 0;
 		origin_x = origin_y = scale = 0;
+		distance = 0;
+		angle = 360;
 	}
   virtual Response accept(class State &state, Visitor &visitor) const {
 		return visitor.visit(state, *this);
@@ -23,4 +25,7 @@ public:
 	double origin_x, origin_y, scale;
 	Filename filename;
 	std::string layername;
+	// add by zwbrush
+	double angle;
+	double distance;
 };

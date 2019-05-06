@@ -29,6 +29,7 @@
 #include "linalg.h"
 #include "printutils.h"
 #include "grid.h"
+#include "value.h"
 
 #include <Eigen/LU>
 #include <boost/foreach.hpp>
@@ -38,6 +39,10 @@ extern "C"
 #include "lua/lauxlib.h"
 }
 
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 /*! /class PolySet
 
@@ -195,6 +200,7 @@ void PolySet::polarization(const double o_size, const double angle)
 extern lua_State *g_lua_state;
 bool PolySet::lua_exp(const std::string& exp)
 {
+
 	if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
 		return false;
 	BOOST_FOREACH(Polygon &p, this->polygons) {
@@ -227,6 +233,87 @@ bool PolySet::lua_exp(const std::string& exp)
 	this->dirty = true;
 	return true;
 }
+	
+	
+void push_lua_params(Value::VectorType params)
+{
+	lua_newtable(g_lua_state);
+	for(int i=0;i<params.size();i++)
+	{	
+		lua_pushnumber(g_lua_state, i+1);
+		if(params[i]->type()==Value::BOOL)
+		{
+			lua_pushboolean(g_lua_state,(int)params[i]->toBool() );
+		}
+		else	if(params[i]->type()==Value::NUMBER)
+		{
+			lua_pushnumber(g_lua_state ,(lua_Number )params[i]->toDouble() );
+		}
+		else	if(params[i]->type()==Value::STRING)
+		{
+			lua_pushstring(g_lua_state,params[i]->toString().c_str() );
+		}
+		else	if(params[i]->type()==Value::VECTOR)
+		{
+			push_lua_params(params[i]->toVector());
+		}
+		else	
+		{
+			lua_pushnil(g_lua_state);
+		}
+		lua_settable(g_lua_state, -3);
+
+	}
+}
+
+Geometry *import_lua(const std::string &filename,Value::VectorType params)
+{
+	  
+	   std::ifstream inFile(filename.c_str(), std::ios::in | std::ios::binary);
+	   std::ostringstream oss;
+	   oss << inFile.rdbuf();
+	   std::string exp = oss.str();
+	    inFile.close();
+		    	if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
+			return NULL;
+	lua_pushvalue(g_lua_state, -1);
+	push_lua_params(params);
+	lua_call(g_lua_state, 1, 0);
+
+	PolySet *p = new PolySet(3);
+	
+	Polygons polygons;
+	lua_getglobal(g_lua_state, "polygons");
+	size_t faces_len = lua_objlen(g_lua_state, -1);
+	for(size_t i=0;i<faces_len;i++)
+	{
+		lua_pushinteger(g_lua_state, i + 1);
+		lua_gettable(g_lua_state, -2);
+		size_t vertexs_len = lua_objlen(g_lua_state, -1);
+		p->append_poly();
+		for(size_t  j =0;j<vertexs_len; j++)
+		{	
+			double pt[3];
+			lua_pushinteger(g_lua_state, j + 1);
+			lua_gettable(g_lua_state, -2);
+			assert(lua_objlen(g_lua_state, -1)==3);
+			for(size_t k =0;k<3; k++)
+			{
+				lua_pushinteger(g_lua_state, k + 1);
+				lua_gettable(g_lua_state, -2);
+				pt[k]=lua_tonumber(g_lua_state, -1);
+				lua_pop(g_lua_state, 1);
+			}
+			lua_pop(g_lua_state, 1);
+			p->append_vertex(pt[0], pt[1], pt[2]);
+		}
+		lua_pop(g_lua_state, 1);
+	}
+	lua_pop(g_lua_state, 1);
+
+	return p;
+}
+
 //add by zwbrush end
 
 

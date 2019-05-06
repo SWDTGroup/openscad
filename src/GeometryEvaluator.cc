@@ -28,6 +28,7 @@
 #include "svg.h"
 #include "calc.h"
 #include "dxfdata.h"
+#include "degree_trig.h"
 
 #include "Carve/DataConversionm.h"	//add by Look
 #undef max(a, b)	//add by Look
@@ -1364,12 +1365,21 @@ Response GeometryEvaluator::visit(State &state, const LinearExtrudeNode &node)
 	return ContinueTraversal;
 }
 
-static void fill_ring(std::vector<Vector3d> &ring, const Outline2d &o, double a)
+static void fill_ring(std::vector<Vector3d> &ring, const Outline2d &o, double a,  bool flip, double z_added)
 {
-	for (unsigned int i=0;i<o.vertices.size();i++) {
-		ring[i][0] = o.vertices[i][0] * sin(a);
-		ring[i][1] = o.vertices[i][0] * cos(a);
-		ring[i][2] = o.vertices[i][1];
+	if (flip) {
+		unsigned int l = o.vertices.size()-1;
+		for (unsigned int i=0 ;i<o.vertices.size();i++) {
+			ring[i][0] = o.vertices[l-i][0] * sin_degrees(a);
+			ring[i][1] = o.vertices[l-i][0] * cos_degrees(a);
+			ring[i][2] = o.vertices[l-i][1]+z_added;
+		}
+	} else {
+		for (unsigned int i=0 ;i<o.vertices.size();i++) {
+			ring[i][0] = o.vertices[i][0] * sin_degrees(a);
+			ring[i][1] = o.vertices[i][0] * cos_degrees(a);
+			ring[i][2] = o.vertices[i][1]+z_added;
+		}
 	}
 }
 
@@ -1393,6 +1403,99 @@ static void fill_ring(std::vector<Vector3d> &ring, const Outline2d &o, double a)
 */
 static Geometry *rotatePolygon(const RotateExtrudeNode &node, const Polygon2d &poly)
 {
+	if (node.angle == 0) return nullptr; 
+
+	PolySet *ps = new PolySet(3);
+	ps->setConvexity(node.convexity);
+	
+	double min_x = 0;
+	double max_x = 0;
+	unsigned int fragments = 0, single_loop_fragments=0;
+	for(const auto &o : poly.outlines()) {
+		for(const auto &v : o.vertices) {
+			min_x = fmin(min_x, v[0]);
+			max_x = fmax(max_x, v[0]);
+
+			if ((max_x - min_x) > max_x && (max_x - min_x) > fabs(min_x)) {
+				PRINTB("ERROR: all points for rotate_extrude() must have the same X coordinate sign (range is %.2f -> %.2f)", min_x % max_x);
+				delete ps;
+				return nullptr;
+			}
+		}
+		single_loop_fragments = Calc::get_fragments_from_r(max_x - min_x, node.fn, node.fs, node.fa);
+		fragments = (unsigned int)fmax( single_loop_fragments* std::abs(node.angle) / 360, 1);
+	}
+
+
+	   double  step_distance = 0 ;
+	   step_distance = node.distance/single_loop_fragments;
+	 	
+	 	
+	bool flip_faces = (min_x >= 0 && node.angle > 0 && (node.angle != 360 || step_distance!=0)) || (min_x < 0 && (node.angle < 0 || (node.angle == 360 && step_distance==0)));
+	
+		
+	if (node.angle != 360 || step_distance!=0) {
+		PolySet *ps_start = poly.tessellate(); // starting face
+		Transform3d rot(angle_axis_degrees(90, Vector3d::UnitX()));
+		ps_start->transform(rot);
+		// Flip vertex ordering
+		if (!flip_faces) {
+			for(auto &p : ps_start->polygons) {
+				std::reverse(p.begin(), p.end());
+			}
+		}
+		ps->append(*ps_start);
+		delete ps_start;
+
+		PolySet *ps_end = poly.tessellate();
+		Transform3d rot2(angle_axis_degrees(node.angle, Vector3d::UnitZ()) * angle_axis_degrees(90, Vector3d::UnitX()));
+		ps_end->transform(rot2);
+		if (flip_faces) {
+			for(auto &p : ps_end->polygons) {
+				std::reverse(p.begin(), p.end());
+			}
+		}
+			BOOST_FOREACH(Polygon &p, ps_end->polygons) {
+				BOOST_FOREACH(Vector3d &v, p) {
+					v[2] += fragments*step_distance;
+				}
+			}
+		ps->append(*ps_end);
+		delete ps_end;
+	}
+
+	for(const auto &o : poly.outlines()) {
+		std::vector<Vector3d> rings[2];
+		rings[0].resize(o.vertices.size());
+		rings[1].resize(o.vertices.size());
+
+		fill_ring(rings[0], o, (node.angle == 360 && step_distance==0) ? -90 : 90, flip_faces, 0); // first ring
+		for (unsigned int j = 0; j < fragments; j++) {
+			double a;
+	
+			if (node.angle == 360 && step_distance==0)
+			    a = -90 + ((j+1)%fragments) * 360.0 / fragments; // start on the -X axis, for legacy support
+			else
+				a = 90 - (j+1)* node.angle / fragments; // start on the X axis
+		
+			fill_ring(rings[(j+1)%2], o, a, flip_faces, step_distance*(j+1));
+    	
+			for (size_t i=0;i<o.vertices.size();i++) {
+				ps->append_poly();
+				ps->insert_vertex(rings[j%2][i]);
+				ps->insert_vertex(rings[(j+1)%2][(i+1)%o.vertices.size()]);
+				ps->insert_vertex(rings[j%2][(i+1)%o.vertices.size()]);
+				ps->append_poly(); 
+				ps->insert_vertex(rings[j%2][i]);
+				ps->insert_vertex(rings[(j+1)%2][i]);
+				ps->insert_vertex(rings[(j+1)%2][(i+1)%o.vertices.size()]);
+			}
+		
+		}
+	}
+	
+	return ps;
+	/*
 	PolySet *ps = new PolySet(3);
 	ps->setConvexity(node.convexity);
 
@@ -1410,15 +1513,26 @@ static Geometry *rotatePolygon(const RotateExtrudeNode &node, const Polygon2d &p
 			}
 		}
 		int fragments = Calc::get_fragments_from_r(max_x - min_x, node.fn, node.fs, node.fa);
+		int total_fragments  = fragments;
+	   double  step_distance = 0 ;
+		if(node.angle!=360)
+		{
+		
+				total_fragments = (int)node.angle/360*fragments;
+		
+		   
+		 	  step_distance = node.distance/fragments;
+	//	   last_angle = fabs(node.circles - fixed) * 2*M_PI / fragments;
+    	}
 
 		std::vector<Vector3d> rings[2];
 		rings[0].resize(o.vertices.size());
 		rings[1].resize(o.vertices.size());
 
 		fill_ring(rings[0], o, -M_PI/2); // first ring
-		for (int j = 0; j < fragments; j++) {
+		for (int j = 0; j < total_fragments; j++) {
 			double a = ((j+1)%fragments*2*M_PI) / fragments - M_PI/2; // start on the X axis
-			fill_ring(rings[(j+1)%2], o, a);
+			fill_ring(rings[(j+1)%2], o, a, (j+1)*step_distance);
 
 			for (size_t i=0;i<o.vertices.size();i++) {
 				ps->append_poly();
@@ -1431,8 +1545,41 @@ static Geometry *rotatePolygon(const RotateExtrudeNode &node, const Polygon2d &p
 				ps->insert_vertex(rings[(j+1)%2][(i+1)%o.vertices.size()]);
 			}
 		}
+		if(node.angle!=360)
+		{
+			PolySet *ps_begin= poly.tessellate(); // bottom
+			BOOST_FOREACH(Polygon &p, ps_begin->polygons) {
+				BOOST_FOREACH(Vector3d &v, p) {
+					Vector3d temp;
+					temp[0] = v[0] * sin(total_fragments%fragments*2*M_PI-M_PI/2);
+					temp[1] = v[0] * cos(total_fragments%fragments*2*M_PI-M_PI/2);
+					temp[2] = v[1];
+					v = temp;
+				}
+			}
+			
+			ps->append(*ps_begin);
+			delete ps_begin;
+			
+			PolySet *ps_end= poly.tessellate(); // bottom
+			BOOST_FOREACH(Polygon &p, ps_end->polygons) {
+				BOOST_FOREACH(Vector3d &v, p) {
+					Vector3d temp;
+					temp[0] = v[0] * sin(-M_PI/2+2*M_PI);
+					temp[1] = v[0] * cos(-M_PI/2);
+					temp[2] = v[1] + step_distance;
+					v = temp;
+				}
+			}
+			// Flip vertex ordering for bottom polygon
+			BOOST_FOREACH(Polygon &p, ps_end->polygons) {
+				std::reverse(p.begin(), p.end());
+			}
+			ps->append(*ps_end);
+			delete ps_end;
+		}
 	}
-	return ps;
+	return ps;*/
 }
 
 /*!

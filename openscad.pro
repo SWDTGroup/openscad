@@ -356,10 +356,12 @@ src/FontCache.h \
            \
            src/Carve/PolygonCarve.h\
            src/Carve/DataConversionm.h\
+		   src/degree_trig.h\
 
 		   
 
 SOURCES += \ 
+		src/degree_trig.cc \
 	   src/libsvg/libsvg.cc \
            src/libsvg/circle.cc \
            src/libsvg/ellipse.cc \

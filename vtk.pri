@@ -2,15 +2,8 @@
 # read environment variables
 OPENSCAD_LIBRARIES_DIR = $$(OPENSCAD_LIBRARIES)
 
-!isEmpty(OPENSCAD_LIBRARIES_DIR) {
-        VTK6_INCLUDEPATH = $$OPENSCAD_LIBRARIES_DIR/include/vtk-6.3
-       VTK6_LIBPATH = $$OPENSCAD_LIBRARIES_DIR/lib
- }
-else
-{
         VTK6_INCLUDEPATH = /usr/local/include/vtk-6.3
         VTK6_LIBPATH = /usr/local/lib 
-}
 
 
 CONFIG(mingw-cross-env) {

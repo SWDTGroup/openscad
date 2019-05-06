@@ -57,7 +57,8 @@ using namespace boost::assign; // bring 'operator+=()' into scope
 #include <boost/cstdint.hpp>
 
 extern Polygon2d *import_svg(const std::string &filename, bool keep_position);
-
+extern Geometry *import_lua(const std::string &filename, Value::VectorType params);
+	
 class ImportModule : public AbstractModule
 {
 public:
@@ -69,7 +70,7 @@ public:
 AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstantiation *inst, EvalContext *evalctx) const
 {
 	AssignmentList args;
-	args += Assignment("file"), Assignment("layer"), Assignment("convexity"), Assignment("origin"), Assignment("scale"), Assignment("keep_position") ;
+	args += Assignment("file"), Assignment("layer"), Assignment("convexity"), Assignment("origin"), Assignment("scale"), Assignment("keep_position"), Assignment("params") ;
 	args += Assignment("filename"), Assignment("layername");
 
   // FIXME: This is broken. Tag as deprecated and fix
@@ -109,6 +110,7 @@ AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstanti
 		else if (ext == ".off") actualtype = TYPE_OFF;
 		else if (ext == ".svg") actualtype = TYPE_SVG;
 		else if (ext == ".dxf") actualtype = TYPE_DXF;
+		else if (ext == ".lua") actualtype = TYPE_LUA;
 	}
 
 	ImportNode *node = new ImportNode(inst, actualtype);
@@ -139,6 +141,10 @@ AbstractNode *ImportModule::instantiate(const Context *ctx, const ModuleInstanti
 	ValuePtr keep_position = c.lookup_variable("keep_position", true);
 	if (!keep_position->isUndefined()) 
 		node->keep_position = keep_position->toBool();
+		
+	ValuePtr params = c.lookup_variable("params", true);
+	if (!params->isUndefined()) 
+		node->params = params->toVector();
 	
 	if (node->scale <= 0) node->scale = 1;
 
@@ -310,6 +316,10 @@ Geometry *ImportNode::createGeometry() const
 		g = import_svg(this->filename, this->keep_position);
  		break;
 	}
+	case TYPE_LUA: {
+		g = import_lua(this->filename, this->params);
+ 		break;
+	}
 	default:
 		PRINTB("ERROR: Unsupported file format while trying to import file '%s'", this->filename);
 		g = new PolySet(0);
@@ -351,5 +361,6 @@ void register_builtin_import()
 	Builtins::init("import_stl", new ImportModule(TYPE_STL));
 	Builtins::init("import_off", new ImportModule(TYPE_OFF));
 	Builtins::init("import_dxf", new ImportModule(TYPE_DXF));
+	Builtins::init("import_lua", new ImportModule(TYPE_LUA));
 	Builtins::init("import", new ImportModule());
 }

@@ -9,7 +9,8 @@ enum import_type_e {
 	TYPE_STL,
 	TYPE_OFF,
 	TYPE_DXF,
-	TYPE_SVG
+	TYPE_SVG,
+	TYPE_LUA,
 };
 
 class ImportNode : public LeafNode
@@ -29,5 +30,6 @@ public:
 	double fn, fs, fa;
 	double origin_x, origin_y, scale;
 	bool keep_position;
+	Value::VectorType params;
 	virtual class Geometry *createGeometry() const;
 };

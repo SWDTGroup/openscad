@@ -103,6 +103,9 @@ std::string CsgNode::name() const
 	case OPENSCAD_INTERSECTION:
 		return "intersection";
 		break;
+	case OPENSCAD_APPEND:
+		return "append";
+		break;
 	default:
 		assert(false);
 	}
@@ -115,5 +118,6 @@ void register_builtin_csgops()
 	Builtins::init("union", new CsgModule(OPENSCAD_UNION));
 	Builtins::init("difference", new CsgModule(OPENSCAD_DIFFERENCE));
 	Builtins::init("intersection", new CsgModule(OPENSCAD_INTERSECTION));
+	Builtins::init("append", new CsgModule(OPENSCAD_APPEND));
 }
 

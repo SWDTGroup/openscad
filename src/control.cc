@@ -49,7 +49,8 @@ public: // types
 		ASSIGN,
 		FOR,
 		INT_FOR,
-		IF
+		IF,
+		APPEND_FOR
     };
 public: // methods
 	ControlModule(Type type)
@@ -305,6 +306,12 @@ AbstractNode *ControlModule::instantiate(const Context* /*ctx*/, const ModuleIns
 		for_eval(*node, *inst, 0, evalctx, evalctx);
 		break;
 
+	case APPEND_FOR:
+		node = new AbstractAppendNode(inst);
+		for_eval(*node, *inst, 0, evalctx, evalctx);
+		break;
+
+
 	case IF: {
 		node = new AbstractNode(inst);
 		const IfElseModuleInstantiation *ifelse = dynamic_cast<const IfElseModuleInstantiation*>(inst);
@@ -332,5 +339,6 @@ void register_builtin_control()
 	Builtins::init("assign", new ControlModule(ControlModule::ASSIGN));
 	Builtins::init("for", new ControlModule(ControlModule::FOR));
 	Builtins::init("intersection_for", new ControlModule(ControlModule::INT_FOR));
+	Builtins::init("append_for", new ControlModule(ControlModule::APPEND_FOR));
 	Builtins::init("if", new ControlModule(ControlModule::IF));
 }

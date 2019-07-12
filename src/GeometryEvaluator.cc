@@ -265,6 +265,7 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren(const Abstrac
 */
 GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren3D(const AbstractNode &node, OpenSCADOperator op)
 {
+
 	Geometry::ChildList children = collectChildren3D(node);
 	if (children.size() == 0) return ResultObject();
 
@@ -291,6 +292,17 @@ GeometryEvaluator::ResultObject GeometryEvaluator::applyToChildren3D(const Abstr
 		if (actualchildren.size() == 1) return ResultObject(actualchildren.front().second);
 		return ResultObject(CGALUtils::applyMinkowski(actualchildren));
 	}
+
+	if (op == OPENSCAD_APPEND) {
+		Geometry::ChildList actualchildren;
+		BOOST_FOREACH(const Geometry::ChildItem &item, children) {
+			if (!item.second->isEmpty()) actualchildren.push_back(item);
+		}
+		if (actualchildren.empty()) return ResultObject();
+		if (actualchildren.size() == 1) return ResultObject(actualchildren.front().second);
+		return ResultObject(CGALUtils::applyAppend(actualchildren));
+	}
+
 
 	CGAL_Nef_polyhedron *N = CGALUtils::applyOperator(children, op);
 	// FIXME: Clarify when we can return NULL and what that means
@@ -511,6 +523,9 @@ Polygon2d *GeometryEvaluator::applyToChildren2D(const AbstractNode &node, OpenSC
 		break;
 	case OPENSCAD_DIFFERENCE:
 		clipType = ClipperLib::ctDifference;
+		break;
+	case OPENSCAD_APPEND:
+		clipType =  ClipperLib::ctUnion;
 		break;
 	default:
 		PRINTB("Error: Unknown boolean operation %d", int(op));
@@ -1834,6 +1849,26 @@ Response GeometryEvaluator::visit(State &state, const AbstractIntersectionNode &
 		shared_ptr<const class Geometry> geom;
 		if (!isSmartCached(node)) {
 			geom = applyToChildren(node, OPENSCAD_INTERSECTION).constptr();
+		}
+		else {
+			geom = smartCacheGet(node, state.preferNef());
+		}
+		addToParent(state, node, geom);
+	}
+	return ContinueTraversal;
+}
+
+
+Response GeometryEvaluator::visit(State &state, const AbstractAppendNode &node)
+{
+	if (state.isPrefix()) {
+		if (isSmartCached(node)) return PruneTraversal;
+		state.setPreferNef(true); // Improve quality of CSG by avoiding conversion loss
+	}
+	if (state.isPostfix()) {
+		shared_ptr<const class Geometry> geom;
+		if (!isSmartCached(node)) {
+			geom = applyToChildren(node, OPENSCAD_APPEND).constptr();
 		}
 		else {
 			geom = smartCacheGet(node, state.preferNef());

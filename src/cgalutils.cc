@@ -460,6 +460,28 @@ namespace CGALUtils {
 		}
 	}
 	
+	Geometry const * applyAppend(const Geometry::ChildList &children)
+	{
+		PolySet* ps_all = new PolySet(3);;
+		BOOST_FOREACH(const Geometry::ChildItem &item, children) {
+			const shared_ptr<const Geometry> &chgeom = item.second;
+			PolySet* ps = NULL;
+			shared_ptr<const PolySet> chP = 
+				dynamic_pointer_cast<const PolySet>(chgeom);
+			if (!chP) {
+				const CGAL_Nef_polyhedron *chns = dynamic_cast<const CGAL_Nef_polyhedron*>(chgeom.get());
+				ps = new PolySet(3);
+				CGALUtils::createPolySetFromNefPolyhedron3(*(chns->p3), *ps);
+				chP.reset(ps);
+			}
+			else
+				ps = (PolySet*)chP.get();
+			
+			ps_all->append(*ps);	
+		}
+		return ps_all;
+	}
+	
 /*!
 	Applies op to all children and returns the result.
 	The child list should be guaranteed to contain non-NULL 3D or empty Geometry objects

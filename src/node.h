@@ -65,6 +65,17 @@ public:
 	virtual std::string name() const;
 };
 
+class AbstractAppendNode : public AbstractNode
+{
+public:
+	AbstractAppendNode(const ModuleInstantiation *mi) : AbstractNode(mi) { };
+	virtual ~AbstractAppendNode() { };
+  virtual Response accept(class State &state, class Visitor &visitor) const;
+	virtual std::string toString() const;
+	virtual std::string name() const;
+};
+
+
 class AbstractPolyNode : public AbstractNode
 {
 public:

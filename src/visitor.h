@@ -12,6 +12,9 @@ public:
   virtual Response visit(class State &state, const class AbstractIntersectionNode &node) {
 		return visit(state, (const class AbstractNode &)node);
 	}
+	virtual Response visit(class State &state, const class AbstractAppendNode &node) {
+		return visit(state, (const class AbstractNode &)node);
+	}
   virtual Response visit(class State &state, const class AbstractPolyNode &node) {
 		return visit(state, (const class AbstractNode &)node);
 	}

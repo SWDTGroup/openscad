@@ -4,6 +4,7 @@
 #include "enums.h"
 #include "memory.h"
 #include "Geometry.h"
+#include "node.h"
 
 #include <utility>
 #include <list>
@@ -21,6 +22,7 @@ public:
 
 	virtual Response visit(State &state, const AbstractNode &node);
 	virtual Response visit(State &state, const AbstractIntersectionNode &node);
+	virtual Response visit(State &state, const AbstractAppendNode &node);
 	virtual Response visit(State &state, const AbstractPolyNode &node);
 	virtual Response visit(State &state, const LinearExtrudeNode &node);
 	virtual Response visit(State &state, const RotateExtrudeNode &node);

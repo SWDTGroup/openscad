@@ -91,6 +91,15 @@ Response CSGTermEvaluator::visit(State &state, const AbstractIntersectionNode &n
 	return ContinueTraversal;
 }
 
+Response CSGTermEvaluator::visit(State &state, const AbstractAppendNode &node)
+{
+	if (state.isPostfix()) {
+		applyToChildren(node, CSGT_UNION);
+		addToParent(state, node);
+	}
+	return ContinueTraversal;
+}
+
 static shared_ptr<CSGTerm> evaluate_csg_term_from_geometry(const State &state, 
 																					std::vector<shared_ptr<CSGTerm> > &highlights, 
 																					std::vector<shared_ptr<CSGTerm> > &background, 

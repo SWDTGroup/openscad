@@ -20,6 +20,7 @@ namespace CGALUtils {
 	CGAL_Iso_cuboid_3 boundingBox(const CGAL_Nef_polyhedron3 &N);
 	bool is_approximately_convex(const PolySet &ps);
 	Geometry const* applyMinkowski(const Geometry::ChildList &children);
+ 	Geometry const* applyAppend(const Geometry::ChildList &children);
 
 	template <typename Polyhedron> std::string printPolyhedron(const Polyhedron &p);
 	template <typename Polyhedron> bool createPolySetFromPolyhedron(const Polyhedron &p, PolySet &ps);

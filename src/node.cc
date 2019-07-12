@@ -57,6 +57,12 @@ Response AbstractIntersectionNode::accept(class State &state, Visitor &visitor) 
 	return visitor.visit(state, *this);
 }
 
+Response AbstractAppendNode::accept(class State &state, Visitor &visitor) const
+{
+	return visitor.visit(state, *this);
+}
+
+
 Response AbstractPolyNode::accept(class State &state, Visitor &visitor) const
 {
 	return visitor.visit(state, *this);
@@ -82,12 +88,26 @@ std::string AbstractIntersectionNode::toString() const
 	return this->name() + "()";
 }
 
+
+std::string AbstractAppendNode::toString() const
+{
+	return this->name() + "()";
+}
+
 std::string AbstractIntersectionNode::name() const
 {
   // We write intersection here since the module will have to be evaluated
 	// before we get here and it will not longer retain the intersection_for parameters
 	return "intersection";
 }
+
+std::string AbstractAppendNode::name() const
+{
+  // We write intersection here since the module will have to be evaluated
+	// before we get here and it will not longer retain the intersection_for parameters
+	return "append";
+}
+
 
 void AbstractNode::progress_prepare()
 {

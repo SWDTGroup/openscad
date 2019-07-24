@@ -274,7 +274,7 @@ Geometry *import_lua(const std::string &filename,Value::VectorType params)
 	   oss << inFile.rdbuf();
 	   std::string exp = oss.str();
 	    inFile.close();
-		    	if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
+		if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
 			return NULL;
 	lua_pushvalue(g_lua_state, -1);
 	push_lua_params(params);

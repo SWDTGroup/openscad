@@ -42,6 +42,15 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 using boost::math::isnan;
 using boost::math::isinf;
+extern "C"
+{ 
+#include "lua/lua.h"
+#include "lua/lauxlib.h"
+}
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 /*
  Random numbers
@@ -1009,6 +1018,77 @@ ValuePtr builtin_cross(const Context *, const EvalContext *evalctx)
 	return ValuePtr(result);
 }
 
+extern lua_State *g_lua_state;
+extern void push_lua_params(Value::VectorType params);
+	
+		
+Value::VectorType  pop_lua_params()
+{
+		Value::VectorType result;
+	if(lua_istable(g_lua_state, -1)==0)
+	{
+		printf("not table in pop_lua_params \n");
+		return result;
+	}
+	size_t table_len = lua_objlen(g_lua_state, -1);
+
+	for(size_t i=0;i<table_len;i++)
+	{	
+		lua_pushnumber(g_lua_state, i+1);
+		lua_gettable(g_lua_state, -2);
+
+		int val_type = lua_type(g_lua_state, -1);
+		switch(val_type)
+		{
+			case LUA_TBOOLEAN:
+					result.push_back( ValuePtr(lua_toboolean(g_lua_state, -1)));
+					break;
+			case LUA_TSTRING:
+					result.push_back( ValuePtr(std::string(lua_tostring(g_lua_state, -1))));
+					break;
+			case LUA_TNUMBER:
+					result.push_back( ValuePtr(lua_tonumber(g_lua_state, -1)));
+					break;
+			case LUA_TNIL:
+					result.push_back(ValuePtr(Value()));
+					break;
+			case LUA_TTABLE:
+					result.push_back(ValuePtr(pop_lua_params()));
+					break;
+			default:
+					result.push_back(ValuePtr(Value()));
+					break;
+		}
+		lua_pop(g_lua_state,  1);
+	}
+	return 	result;
+}
+
+ValuePtr builtin_lua(const Context *, const EvalContext *evalctx)
+{
+	if (evalctx->numArgs() == 2) {
+		ValuePtr arg0 = evalctx->getArgValue(0);
+		if (arg0->type() != Value::STRING)  return  ValuePtr::undefined;
+		std::string lua_filename = arg0->toString();	
+			
+		ValuePtr arg1 = evalctx->getArgValue(1);
+		if (arg1->type() != Value::VECTOR) return  ValuePtr::undefined;
+		const Value::VectorType &v_in = arg1->toVector();
+	   
+	   std::ifstream inFile(lua_filename.c_str(), std::ios::in | std::ios::binary);
+	   std::ostringstream oss;
+	   oss << inFile.rdbuf();
+	   std::string exp = oss.str();
+	    inFile.close();
+		if(luaL_loadstring(g_lua_state, exp.c_str())!=0)
+			return ValuePtr();
+		push_lua_params(v_in);
+		lua_call(g_lua_state, 1, 1);
+		
+		return pop_lua_params();
+	}
+}
+
 void register_builtin_functions()
 {
 	Builtins::init("abs", new BuiltinFunction(&builtin_abs));
@@ -1042,4 +1122,5 @@ void register_builtin_functions()
 	Builtins::init("norm", new BuiltinFunction(&builtin_norm));
 	Builtins::init("cross", new BuiltinFunction(&builtin_cross));
 	Builtins::init("parent_module", new BuiltinFunction(&builtin_parent_module));
+	Builtins::init("lua", new BuiltinFunction(&builtin_lua));
 }

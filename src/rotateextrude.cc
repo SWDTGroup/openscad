@@ -119,6 +119,9 @@ std::string RotateExtrudeNode::toString() const
 			;
 	}
 	stream <<
+		"angle = " << this->angle << ", "
+		<< "distance = " << this->distance << ", ";
+	stream <<
 		"convexity = " << this->convexity << ", "
 		"$fn = " << this->fn << ", $fa = " << this->fa << ", $fs = " << this->fs << ")";
 

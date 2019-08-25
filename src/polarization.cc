@@ -67,9 +67,12 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 	switch (this->type) {
 	case polarization_normal:
 		args += Assignment("angle");
+		args += Assignment("max_len");
 		break;
 	case lua_normal:
 		args += Assignment("exp");
+		args += Assignment("max_len");
+		args += Assignment("params");
 		break;
 	default:
 		assert(false);
@@ -98,12 +101,14 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 		    oss << inFile.rdbuf();
 		    node->exp = oss.str();
 		    inFile.close();
-		
+		    
+		ValuePtr params = c.lookup_variable("params");
+		if (!params->isUndefined()) 
+			node->params = params->toVector();
 
 	}
-	node->fn = c.lookup_variable("$fn")->toDouble();
-	node->fs = c.lookup_variable("$fs")->toDouble();
-	node->fa = c.lookup_variable("$fa")->toDouble();
+	node->fs = c.lookup_variable("max_len")->toDouble();
+
 
 	std::vector<AbstractNode *> instantiatednodes = inst->instantiateChildren(evalctx);
 	node->children.insert(node->children.end(), instantiatednodes.begin(), instantiatednodes.end());
@@ -116,7 +121,7 @@ std::string PolarizationNode::toString() const
 	std::stringstream stream;
 
 	stream << "polarization(angle = " << angle << ", " ;
-	stream  <<  "$fn = " << this->fn << ", $fa = " << this->fa << ", $fs = " << this->fs << ")";
+	stream  <<  "max_len = " << this->fs << ")";
 
 	return stream.str();
 }

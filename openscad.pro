@@ -251,6 +251,7 @@ FORMS   += src/MainWindow.ui \
            src/LibraryInfoDialog.ui
 
 HEADERS += src/typedefs.h \
+					 src/lua_node.h \
            src/version_check.h \
            src/ProgressWidget.h \
            src/parsersettings.h \
@@ -362,6 +363,7 @@ src/FontCache.h \
 
 SOURCES += \ 
 		src/degree_trig.cc \
+		src/lua_node.cc \
 	   src/libsvg/libsvg.cc \
            src/libsvg/circle.cc \
            src/libsvg/ellipse.cc \

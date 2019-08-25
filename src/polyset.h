@@ -6,6 +6,7 @@
 #include "GeometryUtils.h"
 #include "renderer.h"
 #include "Polygon2d.h"
+#include "value.h"
 #include <vector>
 #include <string>
 
@@ -45,7 +46,7 @@ public:
 
 	void transform(const Transform3d &mat);
 	void polarization(const double o_size, const double angle = 360);//add by Look
-	bool lua_exp(const std::string& exp);  //add by zwbrush
+	bool lua_exp(const std::string& exp, const Value::VectorType& params);  //add by zwbrush
 	void resize(Vector3d newsize, const Eigen::Matrix<bool,3,1> &autosize);
 
 	bool is_convex() const;

@@ -11,6 +11,7 @@
 #include "polarizationNode.h"//add by Look
 #include "decimationNode.h"   //add by zwbrush
 #include "alignNode.h"   //add by zwbrush
+#include "lua_node.h"   //add by zwbrush	
 #include "linearextrudenode.h"
 #include "rotateextrudenode.h"
 #include "csgnode.h"
@@ -1181,36 +1182,31 @@ Response GeometryEvaluator::visit(State &state, const PolarizationNode &node)
  							else newps = dynamic_pointer_cast<PolySet>(res.ptr());							
 						}
 
-							shared_ptr<PolySet> newps_subdivided;
-							
-							newps_subdivided.reset( new PolySet(3));
-							double max_edge_lendgth = -1.0;
-
+						
 							BoundingBox bbox = newps->getBoundingBox();
 							double o_size = bbox.max()[0] - bbox.min()[0];
-
-							
-							
-							if(node.fn > 0.0)
-								max_edge_lendgth =  o_size  / node.fn;
-							else if(node.fa > 12)
-								max_edge_lendgth =  o_size * node.fa / node.angle;
-							else 
-								max_edge_lendgth =  node.fs;
-
-							printf("%lf , %lf, %lf, %lf, max_edge_lendgth %lf\n", o_size,node.fn,node.fa,  node.fs, max_edge_lendgth);
-							PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, max_edge_lendgth, PolysetUtils::subdivide_axis_x);
+		
+							if(node.fs > 0.0)
+							{
+								shared_ptr<PolySet> newps_subdivided;
+						
+								newps_subdivided.reset( new PolySet(3));
+					
+								PolysetUtils::polyset_subdivide(*newps, *newps_subdivided, node.fs, PolysetUtils::subdivide_axis_x);
+									
+								newps = newps_subdivided;
+	 						}
  														//注意：强制把极化周长设置为node模型的周长
 							//BoundingBox bbox = newps_subdivided->getBoundingBox();
 							//double o_size = bbox.max()[0] - bbox.min()[0];
 							if(node.exp.empty())
-								newps_subdivided->polarization(o_size, node.angle);
+								newps->polarization(o_size, node.angle);
 							else
-								if(!newps_subdivided->lua_exp(node.exp))
+								if(!newps->lua_exp(node.exp, node.params))
 									PRINTB("ERROR: lua -- %s" , node.exp.c_str());
 
 
- 							geom = newps_subdivided; 
+ 							geom = newps; 
 					}
 				}
 			}
@@ -1876,4 +1872,30 @@ Response GeometryEvaluator::visit(State &state, const AbstractAppendNode &node)
 		addToParent(state, node, geom);
 	}
 	return ContinueTraversal;
+}
+
+static Geometry *lua_Polygon(const LuaNode &node, const Polygon2d &poly)
+{
+return NULL;
+}
+
+
+Response GeometryEvaluator::visit(State &state, const LuaNode &node)
+{
+	if (state.isPrefix()) {
+		if (isSmartCached(node)) return PruneTraversal;
+		state.setPreferNef(true); // Improve quality of CSG by avoiding conversion loss
+	}
+	if (state.isPostfix()) {
+		shared_ptr<const class Geometry> geom;
+		if (!isSmartCached(node)) {
+			geom = applyToChildren(node, OPENSCAD_UNION).constptr();
+		}
+		else {
+			geom = smartCacheGet(node, state.preferNef());
+		}
+		addToParent(state, node, geom);
+	}
+	return ContinueTraversal;
+
 }

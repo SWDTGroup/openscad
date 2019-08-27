@@ -93,8 +93,8 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 	else
 	{
 		ValuePtr v = c.lookup_variable("file");
-
-		std::string filename = lookup_file(v->isUndefined() ? "" : v->toString(), inst->path(), ctx->documentPath());
+		node->file = 	v->toString();
+		std::string filename = lookup_file(v->isUndefined() ? "" : node->file, inst->path(), ctx->documentPath());
 
 		   std::ifstream inFile(filename.c_str(), std::ios::in | std::ios::binary);
 		    std::ostringstream oss;
@@ -119,9 +119,14 @@ AbstractNode *PolarizationModule::instantiate(const Context *ctx, const ModuleIn
 std::string PolarizationNode::toString() const
 {
 	std::stringstream stream;
-
-	stream << "polarization(angle = " << angle << ", " ;
-	stream  <<  "max_len = " << this->fs << ")";
+	fs::path path(this->file);
+	stream << "polarization(angle = " << angle << ", " 
+	 <<  "file = " << this->file << ", "
+#ifndef OPENSCAD_TESTING
+ 	 << "timestamp = " << (fs::exists(path) ? fs::last_write_time(path) : 0) << ", "
+#endif
+	  << "params = " <<  Value(this->params).toString() << ", "
+	   <<  "max_len = " << this->fs << ")";
 
 	return stream.str();
 }

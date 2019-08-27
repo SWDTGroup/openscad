@@ -336,13 +336,13 @@ std::string ImportNode::toString() const
 
 	stream << this->name();
 	stream << "(file = " << this->filename << ", "
-		"layer = " << QuotedString(this->layername) << ", "
-		"origin = [" << std::dec << this->origin_x << ", " << this->origin_y << "], "
-		"scale = " << this->scale << ", "
-		"convexity = " << this->convexity << ", "
-		"$fn = " << this->fn << ", $fa = " << this->fa << ", $fs = " << this->fs
+		<< "layer = " << QuotedString(this->layername) << ", "
+		<< "origin = [" << std::dec << this->origin_x << ", " << this->origin_y << "], "
+		<< "scale = " << this->scale << ", "
+		<< "convexity = " << this->convexity << ", "
+		<< "params = " << Value(this->params).toString() << ", "
+		<< "$fn = " << this->fn << ", $fa = " << this->fa << ", $fs = " << this->fs
 #ifndef OPENSCAD_TESTING
-  // timestamp is needed for caching, but disturbs the test framework
 				 << ", " "timestamp = " << (fs::exists(path) ? fs::last_write_time(path) : 0)
 #endif
 				 << ")";
